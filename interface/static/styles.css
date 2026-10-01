@@ -745,8 +745,9 @@ header img {
   background-color: #1c2836 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
-  border-top-left-radius: 0.5rem;
-  border-bottom-left-radius: 0.5rem;
+  border-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-left: 4px solid #e95c0c !important;
@@ -770,7 +771,9 @@ header img {
   background-color: transparent !important;
   color: #64748b !important;
   font-weight: 500;
-  border-radius: 0.5rem;
+  border-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
   border-left: 4px solid transparent;
   transition: all 0.15s ease-in-out;
   cursor: pointer;
@@ -798,7 +801,11 @@ header, .navbar-top-orange, .top-navbar-orange {
   font-size: 0.82rem;
   background-color: #15202c !important;
   border-left: 4px solid #e95c0c !important;
-  border-radius: 0 0.5rem 0.5rem 0;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
   transition: all 0.15s ease;
   cursor: pointer;
 }
@@ -814,7 +821,11 @@ header, .navbar-top-orange, .top-navbar-orange {
   font-weight: 500;
   font-size: 0.82rem;
   border-left: 4px solid transparent;
-  border-radius: 0 0.5rem 0.5rem 0;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
   background-color: transparent;
   transition: all 0.15s ease;
   cursor: pointer;
