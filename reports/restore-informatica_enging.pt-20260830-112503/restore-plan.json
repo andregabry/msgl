@@ -1,0 +1,32 @@
+{
+  "GeneratedAtUtc": "2026-08-30T10:25:26.8536040Z",
+  "Phase": "Prepare",
+  "Readiness": "READY_TO_STAGE_REMAINING_MESSAGES",
+  "Group": "informatica@enging.pt",
+  "BackupDirectory": "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt",
+  "BackupFiles": [
+    "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt/takeout-20260826T152254Z-001.zip",
+    "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt/takeout-20260826T152254Z-1-001.zip",
+    "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt/takeout-20260826T152254Z-1-002.zip"
+  ],
+  "CanonicalManifest": "/Users/andregabry/Documents/ChatGPT/Migração M365/reports/takeout-informatica_enging.pt-20260829-230157/takeout-canonical-manifest.csv",
+  "ManifestWasCached": true,
+  "CanonicalMessages": 29221,
+  "EarliestMessageUtc": "2018-06-15T14:59:32Z",
+  "LatestMessageUtc": "2026-08-24T17:11:05Z",
+  "MessageIdConflicts": 4,
+  "ConflictsApproved": true,
+  "ParseDefects": 15,
+  "StagingUser": "migracao.informatica@enging.pt",
+  "TargetSharedMailbox": "informatica@enging.pt",
+  "StateDatabase": "/Users/andregabry/Documents/ChatGPT/Migração M365/reports/informatica-staging/import-state.sqlite3",
+  "VerifiedMessages": 13497,
+  "VerificationFailed": 0,
+  "VerificationWarnings": 1,
+  "RemainingMessages": 15724,
+  "BackupChecksumsCsv": "/Users/andregabry/Documents/ChatGPT/Migração M365/reports/restore-informatica_enging.pt-20260830-112503/backup-checksums.csv",
+  "ExchangeMigrationCsv": "/Users/andregabry/Documents/ChatGPT/Migração M365/reports/restore-informatica_enging.pt-20260830-112503/exchange-migration.csv",
+  "MigrationEndpoint": "GoogleWorkspace",
+  "TargetDeliveryDomain": "",
+  "BatchName": ""
+}

@@ -1,0 +1,10 @@
+Pacote privado e autocontido para Windows x64
+
+- Launcher .NET 10 autocontido
+- PowerShell 7.6.5 x64
+- ExchangeOnlineManagement 3.10.1
+- Google Cloud CLI 579.0.0 com Python integrado
+- google-api-python-client e google-auth para Python 3.14/Windows x64
+- Configuração privada da conta de serviço Google
+
+O Microsoft Edge do Windows é usado apenas para exibir a interface local.

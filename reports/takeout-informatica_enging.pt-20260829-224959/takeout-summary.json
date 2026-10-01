@@ -1,0 +1,61 @@
+{
+  "generated_at_utc": "2026-08-29T21:51:46.704599Z",
+  "group": "informatica@enging.pt",
+  "cutoff_utc": "2026-08-25T00:00:00Z",
+  "input_files": [
+    {
+      "path": "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt/takeout-20260826T152254Z-001.zip",
+      "bytes": 53019,
+      "sha256": "349bb0b78eeaefdf340a92b4e96d1d5219c495d9ded9b8fe9bfa20ccbd946f54",
+      "type": "zip"
+    },
+    {
+      "path": "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt/takeout-20260826T152254Z-1-001.zip",
+      "bytes": 57729,
+      "sha256": "0e20462337bc7cb54660979b31e83dfd818d771bacf94512cebc61022d1ddcf3",
+      "type": "zip"
+    },
+    {
+      "path": "/Users/andregabry/Projects/m365/Google Groups/20260826T152249Z/informatica@enging.pt/takeout-20260826T152254Z-1-002.zip",
+      "bytes": 1804336484,
+      "sha256": "7866f1c901d8f252f4ccb717c81d5216fc73fe826c6c8ef0657354fc0990da35",
+      "type": "zip"
+    }
+  ],
+  "takeout": {
+    "mbox_candidates": 2,
+    "mbox_selected": 2,
+    "mbox_selection_mode": "header",
+    "parsed_messages_in_selected_mboxes": 29231,
+    "rejected_by_header_filter": 6,
+    "matching_occurrences": 29225,
+    "canonical_unique_messages": 29219,
+    "duplicate_occurrences": 6,
+    "messages_without_message_id": 0,
+    "message_id_raw_hash_conflicts": 5,
+    "messages_with_parse_defects": 15,
+    "messages_with_attachments_or_inline_content": 9095,
+    "attachment_or_inline_part_count": 12730,
+    "attachment_or_inline_bytes": 1705614933,
+    "maximum_raw_message_bytes": 32374888,
+    "messages_above_150_mib": 0,
+    "messages_with_unparseable_date": 0
+  },
+  "earliest_message_utc": "2018-06-15T14:59:32Z",
+  "latest_message_utc": "2026-08-24T17:11:05Z",
+  "canonical_cutoff": {
+    "before": 29219,
+    "on_or_after": 0,
+    "unparseable_date": 0
+  },
+  "existing_manifest": "/Users/andregabry/Projects/m365/informatica-final-manifest.csv",
+  "reconciliation": {
+    "canonical_unique": 29219,
+    "existing_unique": 19953,
+    "common": 18264,
+    "canonical_missing_from_existing": 10955,
+    "existing_not_in_canonical": 1689,
+    "canonical_before_cutoff": 29219,
+    "canonical_on_or_after_cutoff": 0
+  }
+}

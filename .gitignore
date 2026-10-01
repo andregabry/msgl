@@ -1,0 +1,39 @@
+# Bytecode e Caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.cache/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Compilacao e Empacotamento
+build/
+dist/
+bin/
+obj/
+*.egg-info/
+
+# Credenciais e Segredos Locais
+config/*.local.psd1
+secrets/
+.env
+*.key.json
+service-account.json
+oauth2service.json
+client_secrets.json
+
+# Dados e Bases Locais de Execucao
+*.pst
+*.mbox
+*.zip
+*.log
+AzCopy*.log
+*.steV2
+migration.db
+*.sqlite3
+reports/informatica-staging/
+reports/*/*.sqlite3

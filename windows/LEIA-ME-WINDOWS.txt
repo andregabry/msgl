@@ -1,0 +1,48 @@
+MIGRAÇÃO GOOGLE GROUPS -> MICROSOFT 365 (WINDOWS X64)
+========================================================
+
+IMPORTANTE: ESTE PACOTE É PRIVADO.
+Ele contém a chave da conta de serviço Google da empresa. Não envie o ZIP por
+e-mail, não publique em nuvem pública e não coloque em Git. Guarde-o somente
+em equipamento corporativo protegido.
+
+COMO ABRIR
+----------
+1. Extraia toda a pasta do ZIP. Não execute o EXE de dentro do ZIP.
+2. Abra MigracaoGoogleGroupsM365.exe.
+3. Se o Windows proteger a primeira execução, confirme somente se o arquivo foi
+   recebido pelo canal corporativo e o SHA-256 confere.
+
+PRIMEIRO ACESSO, DIRETAMENTE NO APP
+-----------------------------------
+1. Na barra lateral, clique em "Autenticar" em Google Cloud.
+2. Entre exatamente como andre.gabry@enging.pt e conclua o navegador.
+3. Clique em "Autenticar" em Microsoft 365.
+4. Entre exatamente como andre.gabry@dynamox.net na janela segura da Microsoft.
+5. O painel mostrará os dois estados e confirmará as dependências incluídas.
+
+Depois disso, use "Descobrir novos grupos", selecione o grupo e consulte ou baixe
+os backups. A autenticação do Google Cloud fica no perfil local do aplicativo.
+O Exchange Online valida a identidade e pode voltar a solicitar autenticação
+quando a sessão da Microsoft expirar.
+
+DEPENDÊNCIAS
+------------
+Não é preciso instalar Python, PowerShell, gcloud ou o módulo do Exchange.
+Todos acompanham esta pasta. O Microsoft Edge, componente padrão do Windows,
+é usado para mostrar o painel local.
+
+DADOS LOCAIS
+------------
+Configuração e credenciais interativas:
+  %LOCALAPPDATA%\Enging\MigracaoGoogleGroupsM365
+
+Backups, relatórios, diários e comprovativos:
+  %USERPROFILE%\Documents\M365\Google Groups
+
+SEGURANÇA
+---------
+- O painel escuta apenas em 127.0.0.1 e usa um token aleatório por execução.
+- A chave Google permanece na pasta privada extraída do aplicativo.
+- Não mova somente o EXE: as pastas Resources e Runtime são obrigatórias.
+- Para revogar o acesso, remova a chave no Google Cloud e apague este pacote.

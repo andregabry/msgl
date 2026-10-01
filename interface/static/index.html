@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Enging & Dynamox | Migração Google Groups → M365</title>
+    <!-- Tailwind CSS (Local Bundle with CDN fallback) -->
+    <script src="/tailwind.cdn.js"></script>
+    <script>
+      if (typeof tailwind === 'undefined') {
+        document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+      }
+    </script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              enging: {
+                navy: '#223546',
+                'navy-dark': '#192836',
+                'navy-light': '#2c4358',
+                orange: '#e95c0c',
+                'orange-hover': '#d04f08',
+                'orange-light': '#fff3ed',
+                'orange-subtle': 'rgba(233, 92, 12, 0.08)',
+                blue: '#184e8e',
+                slate: '#f8fafc'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Lucide Icons (Local Bundle with CDN fallback) -->
+    <script src="/lucide.min.js"></script>
+    <script>
+      if (typeof lucide === 'undefined') {
+        document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
+      }
+    </script>
+    <!-- SweetAlert2 -->
+    <script src="/sweetalert2.all.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body class="bg-slate-100 text-slate-800 min-h-screen antialiased flex font-sans selection:bg-enging-orange selection:text-white">
+
+    <!-- ========================================================================= -->
+    <!-- DUAL DARK SIDEBAR (ENGING TAB / LINGUETA BRAND DESIGN)                    -->
+    <!-- ========================================================================= -->
+    <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-50 flex shadow-2xl select-none">
+      
+      <!-- 1. Left Primary Icon Column (Width: 68px) -->
+      <div class="w-[68px] sidebar-primary border-r border-[#192533] flex flex-col justify-between items-center py-4 select-none relative z-20">
+        
+        <!-- Top Brand Icon -->
+        <div class="flex flex-col items-center gap-5 w-full">
+          <div class="w-10 h-10 flex items-center justify-center text-enging-orange">
+            <i data-lucide="layers" class="w-7 h-7 text-enging-orange stroke-[2.5]"></i>
+          </div>
+
+          <!-- Primary Nav Tabs (Linguetas) -->
+          <nav class="w-full space-y-2 pr-0 pl-1.5" aria-label="Navegação Principal">
+            <!-- Tab 1: Status -->
+            <button id="primary-nav-status" onclick="switchMainModule('status', 'overview')" class="primary-tab-btn-active" title="Status e Visão Geral">
+              <i data-lucide="activity" class="w-5 h-5 mb-1"></i>
+              <span class="text-[11px] tracking-tight font-bold">Status</span>
+            </button>
+
+            <!-- Tab 2: Operação -->
+            <button id="primary-nav-operation" onclick="switchMainModule('operation', 'cockpit')" class="primary-tab-btn-inactive" title="Operação e Painel do Grupo">
+              <i data-lucide="users" class="w-5 h-5 mb-1"></i>
+              <span class="text-[11px] tracking-tight">Operação</span>
+            </button>
+
+            <!-- Tab 3: Backups -->
+            <button id="primary-nav-backups" onclick="switchMainModule('backups', 'remote')" class="primary-tab-btn-inactive" title="Backups e Arquivos Google">
+              <i data-lucide="database" class="w-5 h-5 mb-1"></i>
+              <span class="text-[11px] tracking-tight">Backups</span>
+            </button>
+
+            <!-- Tab 4: Histórico -->
+            <button id="primary-nav-history" onclick="switchMainModule('history', 'timeline')" class="primary-tab-btn-inactive" title="Histórico e Linha do Tempo">
+              <i data-lucide="clipboard-list" class="w-5 h-5 mb-1"></i>
+              <span class="text-[11px] tracking-tight">Histórico</span>
+            </button>
+
+            <!-- Tab 5: Sistema -->
+            <button id="primary-nav-system" onclick="switchMainModule('system', 'auth')" class="primary-tab-btn-inactive" title="Conexões Cloud e Ferramentas">
+              <i data-lucide="settings" class="w-5 h-5 mb-1"></i>
+              <span class="text-[11px] tracking-tight">Sistema</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Bottom User Button -->
+        <div class="flex flex-col items-center gap-3">
+          <button id="btnSidebarUser" title="Utilizador: andre.gabry@dynamox.net" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">
+            <i data-lucide="user" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Secondary Submenu Column (Width: 190px) -->
+      <div class="w-[190px] sidebar-secondary border-r border-[#15202c] flex flex-col justify-between py-4 select-none relative z-10">
+        <div class="space-y-3">
+          <!-- Section Title -->
+          <div class="px-4 pt-1 pb-1">
+            <h2 id="submenu-header-title" class="text-xs font-black text-white uppercase tracking-wider">STATUS</h2>
+          </div>
+
+          <!-- Submenu Links List -->
+          <nav id="submenu-items-container" class="space-y-1">
+            <!-- Gerado dinamicamente via JS switchMainModule() -->
+          </nav>
+        </div>
+
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Hidden compatibility elements required by app.js -->
+    <div hidden>
+      <span id="googleConnectionDot"></span>
+      <span id="m365ConnectionDot"></span>
+      <span id="selectedGroupState"></span>
+      <span id="googleConnectionStatus"></span>
+      <button id="authenticateGoogleButton" type="button"></button>
+      <span id="dependenciesDot"></span>
+      <span id="dependenciesStatus"></span>
+      <span id="remoteDiscoveryStatus"></span>
+      <button id="refreshButton" type="button"></button>
+      <button id="syncM365NavButton" type="button"></button>
+      <button id="discoverGoogleGroupsButton" type="button"></button>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MAIN CONTENT AREA                                                         -->
+    <!-- ========================================================================= -->
+    <div class="flex-1 md:pl-[258px] flex flex-col min-h-screen">
+      
+      <!-- Top Navbar with Orange Border and Enging Logo -->
+      <header class="navbar-top-orange border-b border-slate-200 bg-white sticky top-0 z-30 px-4 lg:px-8 py-2.5 flex items-center justify-between gap-4 shadow-xs">
+        
+        <!-- Left: Enging Logo -->
+        <div class="flex items-center gap-3">
+          <img src="/img/logo-horizontal-transparent.png" alt="Enging Logo" class="h-7 w-auto object-contain" style="max-height: 28px; width: auto; object-fit: contain;">
+        </div>
+
+        <!-- Right: Status Badge + Tenant Info + Refresh + User -->
+        <div class="flex items-center gap-3">
+          
+          <!-- Status Pill -->
+          <div id="status-pill" class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-50 text-emerald-700 text-xs font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="m365ConnectionStatus">ONLINE (NORMAL)</span>
+          </div>
+
+          <!-- Target Tenant Pill -->
+          <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono">
+            <span class="text-slate-800 font-bold" id="headerTenantDomain">dynamox.net</span>
+            <span class="px-1.5 py-0.2 rounded bg-orange-100 text-enging-orange text-[10px] font-bold">v2.0</span>
+          </div>
+
+          <!-- Refresh Button -->
+          <button id="quickRefreshBtn" onclick="document.querySelector('#refreshButton').click()" title="Atualizar agora" class="p-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-enging-navy transition border border-slate-200">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          </button>
+
+          <div class="h-5 w-px bg-slate-200 mx-0.5"></div>
+
+          <!-- User & M365 Auth -->
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 text-xs font-mono">
+              <span class="text-slate-700 font-bold" id="adminUserDisplay">admin</span>
+              <span class="px-1.5 py-0.5 rounded bg-orange-100 text-enging-orange text-[10px] font-bold border border-orange-200">ADMIN</span>
+            </div>
+
+            <button id="authenticateM365Button" type="button" title="Autenticar Microsoft 365" class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 transition">
+              Autenticar
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- Breadcrumb Bar & Group Selector -->
+      <div class="px-4 lg:px-8 pt-4 pb-2 flex flex-wrap items-center justify-between gap-4 text-xs font-medium">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 text-slate-500">
+            <span id="breadcrumb-parent" class="font-medium">Status</span>
+            <span class="text-slate-300">&gt;</span>
+            <span id="breadcrumb-current" class="text-slate-800 font-bold">Overview</span>
+          </div>
+
+          <div id="breadcrumbGroupSelectorContainer" class="items-center gap-2 pl-3 border-l border-slate-200 transition-all duration-200" style="display: none;">
+            <label for="groupSelect" class="text-slate-500 font-medium">Grupo em trabalho:</label>
+            <select id="groupSelect" aria-label="Selecionar grupo" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-enging-navy shadow-xs focus:ring-2 focus:ring-enging-orange focus:outline-hidden"></select>
+          </div>
+        </div>
+
+        <div class="text-[11px] font-mono text-slate-400">
+          Última leitura: <span id="last-update" class="text-slate-600 font-semibold">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- Main Workspace Body -->
+      <main id="workspace" class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-4 space-y-6" aria-live="polite">
+      </main>
+
+      <!-- Footer -->
+      <footer class="border-t border-slate-200 bg-white py-3.5 px-4 text-center text-xs text-slate-400 mt-auto">
+        <p>Enging & Dynamox • <span class="text-slate-600 font-mono font-medium">Sistema de Migração Google Groups → M365</span> • Servidor Local</p>
+      </footer>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- WORKSPACE TEMPLATE                                                        -->
+    <!-- ========================================================================= -->
+    <template id="workspaceTemplate">
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 1: STATUS -> VISÃO GERAL (OVERVIEW)                              -->
+      <!-- ===================================================================== -->
+      <div id="page-status-overview" class="view-page active space-y-6">
+        
+        <!-- SECTION 1: ESTADO DAS CONEXÕES CLOUD & AMBIENTE (Movidas da Sidebar) -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 lg:p-6 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-enging-orange"><i data-lucide="cloud-cog" class="w-5 h-5 stroke-[2.5]"></i></span>
+              <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">ESTADO DAS CONEXÕES CLOUD & AMBIENTE</h2>
+            </div>
+            <div class="text-xs text-slate-400 font-mono flex items-center gap-2">
+              <span>Sessões Ativas</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- Google Cloud Card -->
+            <div class="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    G
+                  </div>
+                  <strong class="text-xs font-bold text-slate-800">Google Cloud Workspace</strong>
+                </div>
+                <span id="overviewGoogleStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                  ● A verificar
+                </span>
+              </div>
+              <div class="space-y-1 text-xs">
+                <div class="text-slate-500 text-[11px]">Conta Administradora:</div>
+                <div id="overviewGoogleAccount" class="font-mono font-bold text-slate-800 truncate text-xs">--</div>
+                <div class="text-slate-400 text-[10px] truncate" id="overviewGoogleBucketRoot">Origem Takeout: Configurado</div>
+              </div>
+              <div class="pt-1">
+                <button type="button" onclick="runGlobalAction('gcloud_login')" class="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-enging-navy hover:bg-slate-100 text-xs font-bold shadow-2xs transition flex items-center justify-center gap-1.5">
+                  <i data-lucide="key" class="w-3.5 h-3.5 text-blue-600"></i>
+                  <span>Autenticar / Renovar Google</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Microsoft 365 Tenant Card -->
+            <div class="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-orange-50 text-enging-orange flex items-center justify-center font-bold text-xs">
+                    M
+                  </div>
+                  <strong class="text-xs font-bold text-slate-800">Microsoft 365 Tenant</strong>
+                </div>
+                <span id="overviewM365StatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                  ● A verificar
+                </span>
+              </div>
+              <div class="space-y-1 text-xs">
+                <div class="text-slate-500 text-[11px]">Administrador Exchange:</div>
+                <div id="overviewM365Admin" class="font-mono font-bold text-slate-800 truncate text-xs">--</div>
+                <div class="text-slate-400 text-[10px] truncate">Domínio: <span id="overviewM365Domain" class="font-bold text-slate-600">--</span></div>
+              </div>
+              <div class="pt-1">
+                <button type="button" onclick="runGlobalAction('m365_login')" class="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-enging-navy hover:bg-slate-100 text-xs font-bold shadow-2xs transition flex items-center justify-center gap-1.5">
+                  <i data-lucide="lock" class="w-3.5 h-3.5 text-enging-orange"></i>
+                  <span>Autenticar / Renovar M365</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Local Worker & Dependencies Card -->
+            <div class="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+                  </div>
+                  <strong class="text-xs font-bold text-slate-800">Motor PowerShell Worker</strong>
+                </div>
+                <span id="overviewDependenciesBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  ● Ativo
+                </span>
+              </div>
+              <div class="space-y-1 text-xs">
+                <div class="text-slate-500 text-[11px]">Módulo: ExchangeOnlineManagement</div>
+                <div id="overviewDependenciesDetail" class="font-mono text-[11px] text-slate-600 truncate">PowerShell 7.5 &middot; Python API</div>
+                <div class="text-slate-400 text-[10px] truncate">Integridade de Dependências: Pronta</div>
+              </div>
+              <div class="pt-1">
+                <button type="button" onclick="syncM365Mailboxes()" class="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-enging-navy hover:bg-slate-100 text-xs font-bold shadow-2xs transition flex items-center justify-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  <span>Sincronizar Caixas M365</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SECTION 2: KPIS GLOBAIS DE MIGRAÇÃO -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total de Grupos</span>
+            <div id="kpiTotalGroups" class="text-2xl font-black text-enging-navy font-mono">0</div>
+            <div class="text-[11px] text-slate-500">Contas no catálogo</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Contas Migradas</span>
+            <div id="kpiMigratedGroups" class="text-2xl font-black text-emerald-600 font-mono">0</div>
+            <div class="text-[11px] text-emerald-700/80 font-medium">100% entregues no M365</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Em Sincronização</span>
+            <div id="kpiSyncingGroups" class="text-2xl font-black text-blue-600 font-mono">0</div>
+            <div class="text-[11px] text-slate-500">Lotes ativos no Exchange</div>
+          </div>
+          <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-enging-orange">Total Mensagens</span>
+            <div id="kpiTotalMessages" class="text-2xl font-black text-enging-orange font-mono">0</div>
+            <div id="kpiMessagesSyncedSub" class="text-[11px] text-slate-500">0 sincronizadas</div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: TABELA CONSOLIDADA DE CONTAS (MIGRADAS & EM CURSO) SEM PRECISAR SELECIONAR -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 lg:p-6 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-enging-orange"><i data-lucide="check-circle-2" class="w-5 h-5 stroke-[2.5]"></i></span>
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">CONTAS MIGRADAS & ESTADO GERAL DE TODAS AS CONTAS</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Visão consolidada de todas as contas da organização, permitindo monitorizar o progresso sem selecionar grupos.</p>
+            </div>
+            
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Filter tabs -->
+              <div class="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold">
+                <button type="button" onclick="setOverviewAccountFilter('all')" id="btnFilterOverviewAll" class="px-3 py-1 rounded-lg bg-white shadow-xs text-enging-navy">Todas (<span id="countOverviewAll">0</span>)</button>
+                <button type="button" onclick="setOverviewAccountFilter('migrated')" id="btnFilterOverviewMigrated" class="px-3 py-1 rounded-lg text-slate-600 hover:text-enging-navy">Migradas (<span id="countOverviewMigrated">0</span>)</button>
+                <button type="button" onclick="setOverviewAccountFilter('syncing')" id="btnFilterOverviewSyncing" class="px-3 py-1 rounded-lg text-slate-600 hover:text-enging-navy">Em Lote (<span id="countOverviewSyncing">0</span>)</button>
+                <button type="button" onclick="setOverviewAccountFilter('pending')" id="btnFilterOverviewPending" class="px-3 py-1 rounded-lg text-slate-600 hover:text-enging-navy">Pendentes (<span id="countOverviewPending">0</span>)</button>
+              </div>
+
+              <!-- Search input -->
+              <div class="relative w-48 sm:w-60">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="overviewAccountsSearchInput" oninput="onOverviewAccountsSearch(this.value)" placeholder="Filtrar contas..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-enging-orange focus:outline-hidden" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3">Conta Google (Origem)</th>
+                  <th class="px-4 py-3">Caixa Destino M365</th>
+                  <th class="px-4 py-3">Progresso</th>
+                  <th class="px-4 py-3">Mensagens</th>
+                  <th class="px-4 py-3">Status de Migração</th>
+                  <th class="px-4 py-3 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="overviewAccountsTableBody" class="divide-y divide-slate-100">
+                <!-- Populado dinamicamente via renderOverviewAccountsTable() -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 2: STATUS -> FLUXO DE MIGRAÇÃO (FLOW)                            -->
+      <!-- ===================================================================== -->
+      <div id="page-status-flow" class="view-page space-y-6">
+        
+        <!-- SECTION 1: SELETOR DE OBJETOS (CONTAS DE MIGRAÇÃO) -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 lg:p-6 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-enging-orange"><i data-lucide="layers" class="w-5 h-5 stroke-[2.5]"></i></span>
+                <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider">OBJETOS DE MIGRAÇÃO (CONTAS SELECIONÁVEIS)</h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Selecione uma ou mais contas abaixo para visualizar e comparar o fluxo de migração em simultâneo.</p>
+            </div>
+            
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="selectAllFlowObjects()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                Selecionar Todas
+              </button>
+              <button type="button" onclick="selectActiveFlowObjects()" class="px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-enging-orange border border-orange-200 text-xs font-bold transition">
+                Apenas Em Andamento / Migradas
+              </button>
+              <button type="button" onclick="clearFlowObjects()" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 text-xs font-bold transition">
+                Limpar
+              </button>
+              <div class="relative w-40 sm:w-52">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="flowObjectSearchInput" oninput="onFlowObjectSearch(this.value)" placeholder="Buscar conta..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-enging-orange focus:outline-hidden" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Chips Grid / Flex Container -->
+          <div id="flowObjectChipsContainer" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto pt-1">
+            <!-- Populado dinamicamente com os objetos clicáveis -->
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1 border-t border-slate-100">
+            <span>Dica: Clique sobre cada conta para ativar/desativar a sua visualização no fluxo abaixo.</span>
+            <span id="flowSelectedCountText" class="font-bold text-slate-600">1 conta selecionada</span>
+          </div>
+        </section>
+
+        <!-- SECTION 2: CONTAINER DINÂMICO DE PIPELINES DE FLUXO -->
+        <div id="flowPipelinesContainer" class="space-y-6">
+          <!-- Populado dinamicamente para CADA conta selecionada -->
+        </div>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 3: OPERAÇÃO -> PAINEL DO GRUPO (COCKPIT)                         -->
+      <!-- ===================================================================== -->
+      <div id="page-operation-cockpit" class="view-page space-y-6">
+        
+        <!-- Top Group Header Banner (Exclusivo do Cockpit do Grupo) -->
+        <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-xs">
+          <div class="flex items-center gap-3.5 flex-wrap">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 text-enging-orange flex items-center justify-center font-bold shadow-2xs">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h1 class="selected-email text-base font-black text-enging-navy tracking-tight font-mono"></h1>
+                <span class="readiness-pill px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200"></span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1">
+                <span>Mapeamento: <strong class="mapping text-slate-700 font-mono">--</strong></span>
+                <span>&middot;</span>
+                <button type="button" class="change-target-button text-enging-orange hover:underline font-bold text-xs">
+                  Alterar Destino M365
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="switchMainModule('operation', 'groups')" class="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+              <i data-lucide="list" class="w-3.5 h-3.5 text-slate-400"></i> Ver todos os grupos
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Warning / Notice Banner (Yellow Box) -->
+        <div class="conflict-notice rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-xs" hidden>
+          <div class="flex items-start gap-3.5">
+            <div class="p-2 rounded-xl bg-amber-100 text-amber-700 border border-amber-200">
+              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-sm font-bold text-amber-900">Aviso / Conflito Ativo no Grupo</h3>
+              <p class="conflict-notice-text text-xs text-amber-800 mt-0.5">Mensagens com variantes detectadas.</p>
+            </div>
+            <button class="button warning approve-conflicts px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs" type="button">
+              Rever e aprovar variantes
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI CARDS GRID (4 METRIC CARDS) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- 1. Carga do Sistema / Gmail -->
+          <div class="kpi-card p-5 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Carga no Gmail</span>
+              <span class="p-1.5 rounded-xl bg-orange-50 text-enging-orange border border-orange-200">
+                <i data-lucide="gauge" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="my-4 flex items-baseline justify-between">
+              <div class="verified-note text-3xl font-black text-enging-navy font-mono tracking-tight">0%</div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-enging-orange font-mono"><span class="verified">0</span> msg</div>
+                <div class="text-xs text-slate-400 font-mono"><span class="remaining">0</span> restantes</div>
+              </div>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div id="kpi-load-bar" class="bg-enging-orange h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="text-xs text-slate-400 mt-2 flex justify-between font-medium">
+              <span>0%</span>
+              <span>Total: <strong class="canonical text-slate-600">0</strong></span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          <!-- 2. Integridade Canônica -->
+          <div class="kpi-card p-5 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Integridade Canônica</span>
+              <span class="p-1.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="my-4 flex items-baseline justify-between">
+              <div class="text-3xl font-black text-emerald-600 font-mono tracking-tight">100%</div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-slate-700 font-mono">SHA-256</div>
+                <div class="text-xs text-slate-400 font-mono"><span class="warning-count">0 avisos</span></div>
+              </div>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-emerald-500 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+            <div class="text-xs text-slate-400 mt-2 flex justify-between font-medium">
+              <span>Falhas: <strong class="failed text-slate-600">0</strong></span>
+              <span>Deduplicação</span>
+            </div>
+          </div>
+
+          <!-- 3. Conta Google Estágio -->
+          <div class="kpi-card p-5 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Conta Google (Estágio)</span>
+              <span class="p-1.5 rounded-xl bg-slate-100 text-enging-navy border border-slate-200">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="my-4 flex items-baseline justify-between">
+              <div class="text-2xl font-black text-enging-navy font-mono tracking-tight">Google</div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-slate-700 font-mono">Gmail API</div>
+                <div class="text-xs text-slate-400 font-mono">Workspace</div>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 text-xs text-slate-500 flex justify-between font-medium">
+              <span>Conta: <strong class="account-detail text-slate-700 font-mono truncate max-w-[130px]">OK</strong></span>
+              <span>1 F</span>
+            </div>
+          </div>
+
+          <!-- 4. Destino M365 -->
+          <div class="kpi-card p-5 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Destino M365 (Exchange)</span>
+              <span class="p-1.5 rounded-xl bg-blue-50 text-enging-blue border border-blue-200">
+                <i data-lucide="server" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div class="my-4 flex items-baseline justify-between">
+              <div class="text-2xl font-black text-enging-navy font-mono tracking-tight">M365</div>
+              <div class="text-right">
+                <div class="text-sm font-bold text-enging-blue font-mono">Exchange</div>
+                <div class="text-xs text-slate-400 font-mono">Lote Ativo</div>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 text-xs text-slate-500 flex justify-between font-medium">
+              <span>Lote: <strong class="m365-detail text-slate-700 font-mono truncate max-w-[130px]">Exchange</strong></span>
+              <span>1 F</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- DIRECT M365 INSERTION SECTION (DISPENSES GOOGLE STAGING & IMAP BATCH) -->
+        <section class="rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50/60 via-white to-blue-50/40 p-5 lg:p-6 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-100 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-2xs">
+                <i data-lucide="zap" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">NOVA CAPACIDADE &middot; DIRETO NO M365</span>
+                  <span class="text-xs text-slate-400 font-mono">Bypass do Staging Google</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 mt-0.5">Inserção Direta na Caixa Microsoft 365 (Graph API)</h3>
+              </div>
+            </div>
+            <span class="text-xs text-emerald-800 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200 font-medium">
+              Sem licença Google &bull; Sem lote IMAP &bull; 100% Idempotente
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Permite inserir todas as mensagens do backup Takeout (.mbox/.zip) diretamente na caixa de destino do Microsoft 365 via Microsoft Graph API com formato RFC822 preservado, <strong>dispensando a criação de conta temporária no Google Workspace, dispensando a atribuição de licença paga Gmail e dispensando a configuração de lote no Exchange</strong>. Se a caixa no M365 já contiver os e-mails, o sistema marca a conta como <strong>Concluída</strong> automaticamente.
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3 pt-1">
+            <button class="action-button px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs flex items-center gap-2" data-action="m365_direct_import" type="button">
+              <i data-lucide="cloud-lightning" class="w-4 h-4"></i> Inserir Diretamente no M365
+            </button>
+            <button class="action-button px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-800 font-bold text-xs transition shadow-2xs flex items-center gap-2" data-action="m365_direct_test" type="button">
+              <i data-lucide="play-circle" class="w-4 h-4 text-emerald-600"></i> Teste: Inserir 10 E-mails
+            </button>
+            <button class="action-button px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition shadow-2xs flex items-center gap-2" data-action="m365_status" type="button">
+              <i data-lucide="check-check" class="w-4 h-4 text-blue-600"></i> Verificar com M365 (Reconciliar)
+            </button>
+          </div>
+        </section>
+
+        <!-- CONTROLLED ACTIONS SECTION -->
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 lg:p-6 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">AÇÕES DO CICLO DE MIGRAÇÃO</p>
+              <h3 class="text-base font-bold text-enging-navy mt-0.5">Operar este grupo</h3>
+            </div>
+            <span class="text-xs font-mono text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+              Execução sequencial segura
+            </span>
+          </div>
+
+          <!-- Actions Grid -->
+          <div class="action-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="prepare" type="button">
+              <strong class="text-xs text-slate-800">1. Preparar backup</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Integridade, SHA-256 e deduplicação</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="check_staging" type="button">
+              <strong class="text-xs text-slate-800">2. Verificar Google</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Existência, suspensão e Gmail</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="create_staging" type="button">
+              <strong class="text-xs text-slate-800">Criar temporária</strong>
+              <small class="text-[11px] text-slate-500 mt-1">A licença continuará manual</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="audit_staging" type="button">
+              <strong class="text-xs text-slate-800">3. Auditar Gmail</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Somente leitura e reconciliação</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="load_test" type="button">
+              <strong class="text-xs text-slate-800">4. Carregar 10 msg</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Teste pequeno e verificável</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="load_all" type="button">
+              <strong class="text-xs text-slate-800">5. Carregar restantes</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Continua sem repetir itens</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="repair_dates" type="button">
+              <strong class="text-xs text-slate-800">Corrigir datas</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Repara itens com rejeição</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="m365_status" type="button">
+              <strong class="text-xs text-slate-800">6. Consultar M365</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Caixa de destino, lote e contagens</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 text-left transition shadow-2xs flex flex-col justify-between" data-action="create_batch" type="button">
+              <strong class="text-xs text-slate-800">Criar lote parado</strong>
+              <small class="text-[11px] text-slate-500 mt-1">Cria no Exchange sem iniciar</small>
+            </button>
+            <button class="action-button p-3 rounded-xl border border-orange-300 bg-orange-50/40 hover:bg-orange-50 text-left transition shadow-2xs flex flex-col justify-between" data-action="create_start_batch" type="button">
+              <strong class="text-xs text-enging-orange">7. Criar e iniciar lote</strong>
+              <small class="text-[11px] text-slate-600 mt-1">Somente com carga 100%</small>
+            </button>
+          </div>
+        </section>
+
+        <!-- DATA QUALITY & HISTORY INTERVAL GRIDS -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <article class="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">QUALIDADE DOS DADOS</p>
+            <h3 class="text-sm font-bold text-enging-navy">Revisão do manifesto</h3>
+            <div class="space-y-1.5 text-xs text-slate-600 pt-2 font-mono">
+              <div class="flex justify-between border-b border-slate-50 pb-1"><span>Message-ID com variantes:</span><strong class="conflicts text-slate-800">0</strong></div>
+              <div class="flex justify-between border-b border-slate-50 pb-1"><span>Irregularidades MIME:</span><strong class="defects text-slate-800">0</strong></div>
+              <div class="flex justify-between"><span>Aprovação das variantes:</span><strong class="approval text-slate-800 font-sans">Pendente</strong></div>
+            </div>
+          </article>
+
+          <article class="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-2">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">INTERVALO DO HISTÓRICO</p>
+            <h3 class="text-sm font-bold text-enging-navy">Mensagens encontradas</h3>
+            <div class="space-y-1.5 text-xs text-slate-600 pt-2 font-mono">
+              <div class="flex justify-between border-b border-slate-50 pb-1"><span>Mais antiga:</span><strong class="earliest text-slate-800">--</strong></div>
+              <div class="flex justify-between border-b border-slate-50 pb-1"><span>Mais recente:</span><strong class="latest text-slate-800">--</strong></div>
+              <div class="flex justify-between"><span>Tamanho do backup:</span><strong class="backup-size text-slate-800">--</strong></div>
+            </div>
+          </article>
+        </section>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 4: OPERAÇÃO -> TODOS OS GRUPOS (GROUPS TABLE)                    -->
+      <!-- ===================================================================== -->
+      <div id="page-operation-groups" class="view-page space-y-4">
+        <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">ORGANIZAÇÃO & CATÁLOGO</p>
+              <h3 class="text-base font-bold text-enging-navy">Todos os Grupos de Migração</h3>
+              <small class="text-xs text-slate-500">Selecione qualquer grupo para carregar seus dados operacionais</small>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-slate-50 text-slate-600 uppercase border-b border-slate-200 font-bold">
+                <tr>
+                  <th class="px-4 py-3">Grupo Google</th>
+                  <th class="px-4 py-3">Conta Estágio</th>
+                  <th class="px-4 py-3">Destino M365</th>
+                  <th class="px-4 py-3">Canônicas</th>
+                  <th class="px-4 py-3">Verificadas</th>
+                  <th class="px-4 py-3">Prontidão</th>
+                  <th class="px-4 py-3 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody id="allGroupsTableBody" class="divide-y divide-slate-100 bg-white">
+                <!-- Preenchido dinamicamente via JS renderAllGroupsTable() -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 5: BACKUPS -> ARQUIVOS NO GOOGLE (REMOTE)                        -->
+      <!-- ===================================================================== -->
+      <div id="page-backups-remote" class="view-page space-y-4">
+        <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">ARQUIVOS REMOTOS NO GOOGLE</p>
+              <h3 class="text-base font-bold text-enging-navy">Takeout e Google Cloud Storage</h3>
+              <small class="remote-source text-xs text-slate-500"></small>
+            </div>
+            <div class="backup-actions flex items-center gap-2">
+              <button class="button secondary px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50" data-action="gcloud_login" type="button">Autenticar Google</button>
+              <button class="button secondary px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50" data-action="remote_backup_inventory" type="button">Consultar Google</button>
+              <button class="button primary download-backup-button px-3.5 py-1.5 rounded-lg bg-enging-navy text-white text-xs font-bold hover:bg-enging-navy-light" data-action="download_backup" type="button">Baixar selecionados</button>
+            </div>
+          </div>
+
+          <div class="remote-backup-summary text-xs text-slate-600"></div>
+
+          <div class="backup-subsection-heading flex items-center justify-between pt-2">
+            <div>
+              <h4 class="text-xs font-bold uppercase text-slate-700">Arquivos encontrados no Google</h4>
+              <small class="remote-inventory-time text-slate-400 text-[11px]"></small>
+            </div>
+            <div class="remote-selection-controls flex items-center gap-2 text-xs font-medium">
+              <button class="text-button select-all-remote text-enging-orange hover:underline" type="button">Selecionar todos</button>
+              <button class="text-button clear-remote-selection text-slate-400 hover:underline" type="button">Limpar</button>
+              <strong class="remote-selection-summary text-slate-700"></strong>
+            </div>
+          </div>
+
+          <div class="remote-object-list space-y-1.5 max-h-96 overflow-y-auto font-mono text-xs"></div>
+        </section>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 6: BACKUPS -> CATÁLOGO LOCAL (LOCAL)                             -->
+      <!-- ===================================================================== -->
+      <div id="page-backups-local" class="view-page space-y-4">
+        <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div class="border-b border-slate-100 pb-3">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">ARMAZENAMENTO LOCAL</p>
+            <h3 class="text-base font-bold text-enging-navy">Backups Registados no Computador</h3>
+            <small class="text-slate-400 text-[11px]">Catálogo local, integridade SHA-256 e localização física dos ficheiros .mbox</small>
+          </div>
+          <div class="backup-export-list mt-3 space-y-2"></div>
+        </section>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 7: HISTÓRICO -> LINHA DO TEMPO (TIMELINE)                        -->
+      <!-- ===================================================================== -->
+      <div id="page-history-timeline" class="view-page space-y-4">
+        <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div class="border-b border-slate-100 pb-3">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">RASTREABILIDADE & AUDITORIA</p>
+            <h3 class="text-base font-bold text-enging-navy">Linha do Tempo deste Grupo</h3>
+            <small class="text-slate-500 text-xs">Comprovativos, recibos e logs isolados por caixa</small>
+          </div>
+          <div class="activity-list space-y-2.5"></div>
+        </section>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 8: SISTEMA -> CONEXÕES CLOUD (AUTH)                              -->
+      <!-- ===================================================================== -->
+      <div id="page-system-auth" class="view-page space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <!-- Bloco Google Cloud -->
+          <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-enging-blue"><i data-lucide="cloud" class="w-5 h-5"></i></span>
+                <h3 class="text-sm font-bold text-slate-900 uppercase">Google Cloud & Workspace</h3>
+              </div>
+              <span id="systemPageGoogleDot" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">● Conectado</span>
+            </div>
+            <div class="space-y-2 text-xs text-slate-600">
+              <div class="flex justify-between border-b border-slate-50 pb-2">
+                <span>Ferramenta CLI:</span>
+                <strong class="font-mono text-slate-800">Google Cloud SDK (gcloud)</strong>
+              </div>
+              <div class="flex justify-between border-b border-slate-50 pb-2">
+                <span>Conta Autenticada:</span>
+                <strong id="systemPageGoogleAccount" class="font-mono text-slate-800">andre.gabry@dynamox.net</strong>
+              </div>
+              <div class="flex justify-between">
+                <span>Service Account:</span>
+                <strong class="font-mono text-slate-800">workspace-migration.json</strong>
+              </div>
+            </div>
+            <div class="pt-2">
+              <button onclick="runGlobalAction('gcloud_login')" class="w-full px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 font-bold text-xs text-slate-700 transition" type="button">
+                🔑 Reautenticar Google Workspace
+              </button>
+            </div>
+          </section>
+
+          <!-- Bloco Microsoft 365 -->
+          <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-enging-orange"><i data-lucide="shield-check" class="w-5 h-5"></i></span>
+                <h3 class="text-sm font-bold text-slate-900 uppercase">Microsoft 365 Exchange Online</h3>
+              </div>
+              <span id="systemPageM365Dot" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">● Conectado</span>
+            </div>
+            <div class="space-y-2 text-xs text-slate-600">
+              <div class="flex justify-between border-b border-slate-50 pb-2">
+                <span>Tenant:</span>
+                <strong id="systemPageM365Tenant" class="font-mono text-slate-800">dynamox.net</strong>
+              </div>
+              <div class="flex justify-between border-b border-slate-50 pb-2">
+                <span>Administrador:</span>
+                <strong id="systemPageM365Admin" class="font-mono text-slate-800">andre.gabry@dynamox.net</strong>
+              </div>
+              <div class="flex justify-between">
+                <span>Módulo PowerShell:</span>
+                <strong class="font-mono text-slate-800">ExchangeOnlineManagement v3.x</strong>
+              </div>
+            </div>
+            <div class="pt-2 flex gap-2">
+              <button onclick="runGlobalAction('m365_login')" class="flex-1 px-4 py-2 rounded-xl bg-enging-navy hover:bg-black text-white font-bold text-xs transition" type="button">
+                🔑 Autenticar M365
+              </button>
+              <button onclick="runGlobalAction('sync_m365_mailboxes')" class="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 font-bold text-xs text-slate-700 transition" type="button">
+                🔄 Sincronizar
+              </button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- PAGE 9: SISTEMA -> FERRAMENTAS GLOBAIS (TOOLS)                        -->
+      <!-- ===================================================================== -->
+      <div id="page-system-tools" class="view-page space-y-5">
+        <section class="p-5 lg:p-6 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div class="border-b border-slate-100 pb-3">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">UTILITÁRIOS GLOBAIS</p>
+            <h3 class="text-base font-bold text-enging-navy">Ações Administrativas & Diagnóstico</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <button onclick="runGlobalAction('discover_remote_groups')" class="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white text-left transition shadow-xs flex flex-col justify-between" type="button">
+              <div>
+                <strong class="text-xs text-slate-800 block">Descobrir Novos Grupos no Google</strong>
+                <small class="text-[11px] text-slate-500 mt-1 block">Consulta o Takeout para identificar novos grupos</small>
+              </div>
+              <span class="mt-3 text-xs font-bold text-enging-orange">Executar Descoberta &rarr;</span>
+            </button>
+
+            <button onclick="runGlobalAction('sync_m365_mailboxes')" class="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white text-left transition shadow-xs flex flex-col justify-between" type="button">
+              <div>
+                <strong class="text-xs text-slate-800 block">Sincronizar Caixas de Correio M365</strong>
+                <small class="text-[11px] text-slate-500 mt-1 block">Atualiza a lista de destinos do Exchange Online</small>
+              </div>
+              <span class="mt-3 text-xs font-bold text-enging-orange">Sincronizar Caixas &rarr;</span>
+            </button>
+
+            <button onclick="loadOverview()" class="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white text-left transition shadow-xs flex flex-col justify-between" type="button">
+              <div>
+                <strong class="text-xs text-slate-800 block">Recarregar Estado do Painel</strong>
+                <small class="text-[11px] text-slate-500 mt-1 block">Revalida ficheiros locais, manifestos e conexões</small>
+              </div>
+              <span class="mt-3 text-xs font-bold text-slate-700">Recarregar Agora &rarr;</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+    </template>
+
+    <!-- ========================================================================= -->
+    <!-- RUNNING TASK DRAWER / JOB PANEL                                           -->
+    <!-- ========================================================================= -->
+    <aside id="jobPanel" class="fixed bottom-4 right-4 z-50 w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col" hidden aria-live="polite">
+      <div class="p-4 bg-enging-navy text-white flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-orange-300">TRABALHO EM EXECUÇÃO</p>
+          <h2 id="jobTitle" class="text-sm font-bold">Operação</h2>
+          <small id="jobSubtitle" class="text-xs text-slate-300"></small>
+        </div>
+        <button id="closeJobButton" class="icon-button text-slate-300 hover:text-white text-lg font-bold p-1" type="button" aria-label="Fechar painel">×</button>
+      </div>
+
+      <div class="w-full bg-slate-100 h-1.5">
+        <div id="jobProgressBar" class="bg-enging-orange h-1.5 transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <div class="p-4 space-y-3 max-h-[460px] overflow-y-auto">
+        <div class="flex items-center justify-between text-xs">
+          <strong id="jobStatus" class="font-bold text-slate-700">INICIANDO</strong>
+          <span id="jobProgressText" class="font-mono text-slate-500"></span>
+        </div>
+
+        <div id="jobActivity" class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100"></div>
+
+        <!-- Device Code Authentication Card -->
+        <div id="jobDeviceAuth" class="p-3.5 rounded-xl border border-amber-300 bg-amber-50 space-y-2 text-xs" hidden>
+          <div class="font-bold text-amber-900 flex items-center gap-1.5">
+            <span>🔑 Autenticação Microsoft 365 Requerida</span>
+          </div>
+          <p class="text-amber-800 text-[11px]">Copie o código abaixo e aceda à página de autorização da Microsoft:</p>
+          <div class="flex items-center gap-2">
+            <span id="deviceAuthCode" class="font-mono font-black text-sm px-3 py-1 rounded-lg bg-white border border-amber-300 text-amber-900 select-all">--------</span>
+            <button id="deviceAuthCopyBtn" class="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-bold text-xs hover:bg-amber-700" type="button">📋 Copiar</button>
+          </div>
+          <div>
+            <a id="deviceAuthLink" href="https://login.microsoft.com/device" target="_blank" class="inline-block mt-1 px-3 py-1.5 rounded-lg bg-enging-navy hover:bg-black text-white font-bold text-xs">
+              🚀 Abrir Página de Login da Microsoft
+            </a>
+          </div>
+        </div>
+
+        <!-- Recovery Banner -->
+        <div id="jobRecovery" class="p-3 rounded-xl bg-orange-50 border border-orange-200 text-xs space-y-1" hidden>
+          <strong id="jobRecoveryTitle" class="text-enging-navy block font-bold"></strong>
+          <span id="jobRecoveryText" class="text-slate-600 block"></span>
+        </div>
+
+        <pre id="jobLog" class="p-3 rounded-xl bg-slate-900 text-slate-100 text-[11px] font-mono max-h-40 overflow-y-auto whitespace-pre-wrap select-text" tabindex="0"></pre>
+      </div>
+
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+        <button id="cancelJobButton" class="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition" type="button">
+          Cancelar
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="viewJobEvidenceButton" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold transition" type="button" hidden>
+            Ver Log
+          </button>
+          <button id="continueJobButton" class="px-3.5 py-1.5 rounded-xl bg-enging-orange hover:bg-enging-orange-hover text-white text-xs font-bold transition shadow-xs" type="button" hidden>
+            Continuar
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Confirmation Dialog -->
+    <dialog id="confirmDialog" class="rounded-2xl p-6 shadow-2xl border border-slate-200 max-w-md w-full backdrop:bg-black/50">
+      <form method="dialog" class="space-y-4">
+        <p class="text-xs font-bold uppercase tracking-wider text-enging-orange">CONFIRMAÇÃO NECESSÁRIA</p>
+        <h2 id="confirmTitle" class="text-base font-bold text-enging-navy"></h2>
+        <p id="confirmMessage" class="text-xs text-slate-600 leading-relaxed"></p>
+        <label id="confirmAcknowledgement" class="flex items-start gap-2 pt-2 text-xs font-medium text-slate-700 cursor-pointer" hidden>
+          <input id="confirmCheckbox" type="checkbox" class="mt-0.5 rounded text-enging-orange focus:ring-enging-orange">
+          <span id="confirmCheckboxText"></span>
+        </label>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold" value="cancel" type="submit">Cancelar</button>
+          <button id="confirmButton" class="px-4 py-1.5 rounded-xl bg-enging-orange hover:bg-enging-orange-hover text-white text-xs font-bold shadow-xs" value="confirm" type="submit">Confirmar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Evidence Dialog -->
+    <dialog id="evidenceDialog" class="rounded-2xl p-6 shadow-2xl border border-slate-200 max-w-3xl w-full backdrop:bg-black/50" aria-labelledby="evidenceTitle">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-enging-orange" id="evidenceCategory">EVIDÊNCIA</p>
+          <h2 id="evidenceTitle" class="text-base font-bold text-enging-navy">Log da operação</h2>
+          <p class="text-xs text-slate-400 font-mono mt-0.5" id="evidenceMeta"></p>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="evidenceCopyBtn" class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium" type="button">Copiar</button>
+          <button id="evidenceDownloadBtn" class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-medium" type="button">Descarregar</button>
+          <button id="evidenceCloseBtn" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold" type="button">Fechar</button>
+        </div>
+      </div>
+      <div class="my-3 flex items-center gap-3 text-xs text-slate-500 font-mono">
+        <span id="evidenceStatusBadge" class="px-2 py-0.5 rounded-md bg-slate-100 font-bold"></span>
+        <span id="evidenceDuration"></span>
+        <span id="evidenceTimestamp"></span>
+      </div>
+      <pre id="evidenceLog" class="p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs max-h-96 overflow-y-auto whitespace-pre-wrap select-text" tabindex="0"></pre>
+    </dialog>
+
+    <!-- Target Mailbox Dialog -->
+    <dialog id="targetMailboxDialog" class="rounded-2xl p-6 shadow-2xl border border-slate-200 max-w-lg w-full backdrop:bg-black/50" aria-labelledby="targetDialogTitle">
+      <div class="space-y-4">
+        <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-enging-orange">DESTINO NO MICROSOFT 365</p>
+            <h3 id="targetDialogTitle" class="text-base font-bold text-enging-navy">Mapear destino para este grupo</h3>
+            <small id="targetDialogGroupSubtitle" class="text-xs text-slate-500 font-mono"></small>
+          </div>
+          <button type="button" id="closeTargetDialog" class="text-slate-400 hover:text-slate-600 text-lg font-bold p-1" aria-label="Fechar">×</button>
+        </div>
+
+        <p class="text-xs text-slate-600">Selecione uma conta existente no Microsoft 365 ou indique manualmente o e-mail de destino correto para este grupo.</p>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <button type="button" id="syncM365MailboxesBtn" class="px-3 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+            🔄 Sincronizar contas do M365
+          </button>
+          <small id="syncM365StatusText" class="text-slate-400 font-mono"></small>
+        </div>
+
+        <div class="space-y-1">
+          <label for="m365SearchInput" class="text-xs font-bold text-slate-700">Pesquisar conta M365 detectada:</label>
+          <input type="text" id="m365SearchInput" placeholder="Filtrar por nome ou e-mail..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-enging-orange focus:outline-hidden" autocomplete="off" />
+        </div>
+
+        <div class="border border-slate-200 rounded-xl overflow-hidden bg-white max-h-52 overflow-y-auto">
+          <div id="m365MailboxList" class="divide-y divide-slate-100 text-xs" role="listbox">
+            <!-- Populado dinamicamente -->
+          </div>
+        </div>
+
+        <div class="space-y-1 pt-2 border-t border-slate-100">
+          <label for="targetMailboxCustomInput" class="text-xs font-bold text-slate-700">Ou digite/confirme o e-mail de destino:</label>
+          <input type="email" id="targetMailboxCustomInput" class="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-enging-orange focus:outline-hidden" placeholder="ex: eng.compras@dynamox.net" required />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" id="cancelTargetDialog" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold">Cancelar</button>
+          <button type="button" id="saveTargetMailboxBtn" class="px-4 py-1.5 rounded-xl bg-enging-orange hover:bg-enging-orange-hover text-white text-xs font-bold shadow-xs">Guardar Destino</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- ========================================================================= -->
+    <!-- GLASSMORPHISM GLOBAL LOADING OVERLAY                                      -->
+    <!-- ========================================================================= -->
+    <div id="globalLoadingOverlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 backdrop-blur-md transition-all duration-300 opacity-100 pointer-events-auto">
+      <div class="relative bg-white/85 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-8 max-w-sm w-full mx-4 text-center space-y-5">
+        
+        <!-- Animated glowing spinner -->
+        <div class="relative w-16 h-16 mx-auto flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full border-4 border-orange-500/20 animate-ping"></div>
+          <div class="w-14 h-14 rounded-full border-3 border-orange-100 border-t-enging-orange border-r-enging-orange animate-spin"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-enging-orange to-amber-400 shadow-xs animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Title & Subtitle -->
+        <div class="space-y-1.5">
+          <span class="text-[10px] font-black tracking-widest uppercase text-enging-orange/90 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200/60 inline-block">
+            Enging M365
+          </span>
+          <h3 id="globalLoadingTitle" class="text-base font-black text-slate-900 tracking-tight">
+            A carregar dados do sistema...
+          </h3>
+          <p id="globalLoadingSubtitle" class="text-xs text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
+            A sincronizar estado das contas, catálogo e conexões cloud.
+          </p>
+        </div>
+
+        <!-- Progress shimmer line -->
+        <div class="w-full h-1 bg-slate-100/80 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-orange-400 via-enging-orange to-amber-400 rounded-full animate-pulse w-full"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="errorToast" class="toast" role="alert" hidden></div>
+    
+    <!-- Application Scripts -->
+    <script src="/app.js?v=2.4.2" defer></script>
+  </body>
+</html>

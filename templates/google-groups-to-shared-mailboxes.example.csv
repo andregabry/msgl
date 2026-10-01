@@ -1,0 +1,3 @@
+SourceGroup,TargetPrimarySmtpAddress,DisplayName,Alias,FullAccessMembers,SendAsMembers,TargetRootFolder
+grupo@example.com,grupo@example.com,Grupo Exemplo,grupo,owner1@example.com;owner2@example.com,owner1@example.com;owner2@example.com,/Migrado-Google-Groups
+
