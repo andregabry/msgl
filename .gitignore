@@ -28,6 +28,7 @@ secrets/
 service-account.json
 oauth2service.json
 client_secrets.json
+Microsoft-API.txt
 
 # Dados e Bases Locais de Execucao
 *.pst

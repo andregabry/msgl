@@ -69,6 +69,7 @@ const MODULES: PrimaryModule[] = [
     icon: MessageSquare,
     subTitle: "ARQUIVO GOOGLE CHAT",
     subItems: [
+      { href: "/portal/chat", label: "Portal Google Chat" },
       { href: "/chat/meus-chats", label: "Meus Chats" },
     ],
   },
@@ -107,11 +108,26 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
+  const [sessionUser, setSessionUser] = useState<any | null>(null);
+
   // Sync initial theme from document on mount
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
     setTheme(isDark ? "dark" : "light");
-  }, []);
+
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.user) {
+          setSessionUser(d.user);
+          // If user is chat-only (USER role) and not on /portal/chat, redirect immediately
+          if (d.user.role === "USER" && !pathname.startsWith("/portal/chat")) {
+            window.location.href = "/portal/chat";
+          }
+        }
+      })
+      .catch(console.error);
+  }, [pathname]);
 
   const setThemeMode = (mode: "light" | "dark") => {
     setTheme(mode);
@@ -125,6 +141,11 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
     } catch (e) {}
     window.dispatchEvent(new Event("themechange"));
   };
+
+  // If on /portal/chat or if the user is a chat-only user, bypass the dual admin sidebar completely
+  if (pathname.startsWith("/portal/chat") || sessionUser?.role === "USER") {
+    return <div className="min-h-screen w-full">{children}</div>;
+  }
 
   // Find active module by matching current route
   const activeModule =
