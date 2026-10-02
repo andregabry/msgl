@@ -70,6 +70,11 @@ export class MicrosoftGraphClient {
     return res.json() as Promise<T>;
   }
 
+  public resetToken(): void {
+    this.cachedToken = null;
+    this.tokenExpiresAt = 0;
+  }
+
   public isConfigured(): boolean {
     return Boolean(
       process.env.MICROSOFT_TENANT_ID &&
