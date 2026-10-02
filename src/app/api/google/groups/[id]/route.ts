@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, serializeBigInt } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/session";
 
 export async function GET(
@@ -48,7 +48,7 @@ export async function GET(
       return NextResponse.json({ error: "Grupo Google não encontrado." }, { status: 404 });
     }
 
-    return NextResponse.json({ group });
+    return NextResponse.json(serializeBigInt({ group }));
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

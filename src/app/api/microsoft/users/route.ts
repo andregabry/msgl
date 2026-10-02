@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, serializeBigInt } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/session";
 import { microsoftDirectoryService } from "@/lib/microsoft/directory.service";
 
@@ -32,15 +32,17 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json({
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-      users,
-    });
+    return NextResponse.json(
+      serializeBigInt({
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        users,
+      })
+    );
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 401 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
