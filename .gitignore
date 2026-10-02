@@ -41,3 +41,5 @@ migration.db
 *.sqlite3
 reports/informatica-staging/
 reports/*/*.sqlite3
+storage/
+data/

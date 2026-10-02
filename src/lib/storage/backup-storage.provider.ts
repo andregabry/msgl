@@ -53,6 +53,7 @@ export class LocalFilesystemStorageProvider implements BackupStorageProvider {
     const allowedRoots = [
       this.rootDir.toLowerCase().replace(/\\/g, "/"),
       path.resolve("C:/Users/andre.gabry/Projects/m365").toLowerCase().replace(/\\/g, "/"),
+      path.resolve(process.cwd(), "storage").toLowerCase().replace(/\\/g, "/"),
     ];
 
     const resolved = path.isAbsolute(relativePath)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, serializeBigInt } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/session";
 import { googleDirectoryService } from "@/lib/google/directory.service";
+import { backupDownloadService } from "@/lib/backups/backup-download.service";
 
 export async function GET(req: NextRequest) {
   try {
@@ -53,13 +54,21 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+    const groupsWithStatus = groups.map((g) => ({
+      ...g,
+      backupRequests: g.backupRequests.map((b) => ({
+        ...b,
+        isDownloaded: backupDownloadService.getBackupStatus(b).isDownloaded,
+      })),
+    }));
+
     return NextResponse.json(
       serializeBigInt({
         total,
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-        groups,
+        groups: groupsWithStatus,
       })
     );
   } catch (err: any) {

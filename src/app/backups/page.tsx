@@ -28,6 +28,7 @@ export default function BackupsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [syncingLocal, setSyncingLocal] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // Import Modal
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -123,6 +124,69 @@ export default function BackupsPage() {
       dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setSyncingLocal(false);
+    }
+  };
+
+  const handleToggleBackupLocal = async (backupId: string, currentIsDownloaded: boolean) => {
+    if (currentIsDownloaded) {
+      const confirmed = await confirmAction({
+        title: "Remover Backup Baixado?",
+        text: "Tem a certeza que deseja remover o backup baixado do armazenamento da aplicação? Esta ação libertará espaço em disco. Os metadados continuarão guardados no sistema.",
+        confirmText: "Sim, Remover Backup",
+        cancelText: "Cancelar",
+        icon: "warning",
+      });
+
+      if (!confirmed) return;
+
+      setTogglingId(backupId);
+      try {
+        const res = await fetch("/api/backups/toggle-local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ backupRequestId: backupId, action: "REMOVE" }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success("Backup Removido!", "A cópia local foi removida do armazenamento da aplicação.");
+          fetchBackups();
+          if (selectedBackup && selectedBackup.id === backupId) {
+            setSelectedBackup((prev: any) => ({ ...prev, isDownloaded: false, status: "REMOVED_LOCAL" }));
+          }
+        } else {
+          dialog.error("Erro ao Remover", data.error || "Não foi possível remover o backup.");
+        }
+      } catch (err: any) {
+        dialog.error("Falha", err.message || "Erro inesperado.");
+      } finally {
+        setTogglingId(null);
+      }
+    } else {
+      setTogglingId(backupId);
+      showLoading("A Descarregar Backup...", "A descarregar e armazenar o ficheiro no diretório interno da aplicação...");
+      try {
+        const res = await fetch("/api/backups/toggle-local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ backupRequestId: backupId, action: "DOWNLOAD" }),
+        });
+        const data = await res.json();
+        hideLoading();
+        if (res.ok) {
+          toast.success("Download Concluído!", data.message || "Backup descarregado com sucesso.");
+          fetchBackups();
+          if (selectedBackup && selectedBackup.id === backupId) {
+            setSelectedBackup((prev: any) => ({ ...prev, isDownloaded: true, status: "READY" }));
+          }
+        } else {
+          dialog.error("Erro no Download", data.error || "Não foi possível descarregar o backup.");
+        }
+      } catch (err: any) {
+        hideLoading();
+        dialog.error("Falha", err.message || "Erro inesperado ao descarregar backup.");
+      } finally {
+        setTogglingId(null);
+      }
     }
   };
 
@@ -225,9 +289,9 @@ export default function BackupsPage() {
                 <th className="py-3 px-4">Entidade / Conta</th>
                 <th className="py-3 px-4">Serviço</th>
                 <th className="py-3 px-4 text-center">Formato</th>
-                <th className="py-3 px-4 text-center">Origem</th>
                 <th className="py-3 px-4 text-center">Tamanho</th>
                 <th className="py-3 px-4 text-center">Estado</th>
+                <th className="py-3 px-4 text-center">Cópia no App (Liga/Desliga)</th>
                 <th className="py-3 px-4">Data do Pedido</th>
                 <th className="py-3 px-4 text-right">Ações</th>
               </tr>
@@ -257,11 +321,6 @@ export default function BackupsPage() {
                           {b.format}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
-                          {artifact?.origin || "GOOGLE_VAULT"}
-                        </span>
-                      </td>
                       <td className="py-3 px-4 text-center font-bold text-[#223546]">
                         {formatBytes(artifact?.bytes)}
                       </td>
@@ -272,11 +331,49 @@ export default function BackupsPage() {
                               ? "bg-emerald-100 text-emerald-800"
                               : b.status === "FAILED"
                               ? "bg-rose-100 text-rose-800"
+                              : b.status === "REMOVED_LOCAL"
+                              ? "bg-amber-100 text-amber-800"
                               : "bg-blue-100 text-blue-800"
                           }`}
                         >
                           {b.status}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleBackupLocal(b.id, b.isDownloaded)}
+                            disabled={togglingId === b.id}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                              b.isDownloaded ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"
+                            }`}
+                            title={
+                              b.isDownloaded
+                                ? "Backup baixado no app (clique para remover cópia local)"
+                                : "Descarregar backup para a pasta interna do app"
+                            }
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                b.isDownloaded ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                          <span
+                            className={`text-[11px] font-bold ${
+                              b.isDownloaded ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"
+                            }`}
+                          >
+                            {togglingId === b.id ? (
+                              <RefreshCw className="w-3 h-3 animate-spin text-slate-500 inline" />
+                            ) : b.isDownloaded ? (
+                              "Baixado"
+                            ) : (
+                              "Baixar"
+                            )}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-slate-500 text-[11px]">
                         {new Date(b.createdAt).toLocaleString("pt-PT")}
@@ -461,6 +558,40 @@ export default function BackupsPage() {
                   <div className="font-mono text-[10px] text-slate-700 bg-white p-1 rounded border border-slate-200">
                     {selectedBackup.artifacts?.[0]?.sha256 || "Aguardando download"}
                   </div>
+                </div>
+              </div>
+
+              {/* Botão Liga/Desliga Cópia no App */}
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <div className="font-bold text-slate-900 text-xs flex items-center gap-2">
+                    <HardDrive className="w-4 h-4 text-[#e95c0c]" />
+                    <span>Cópia Física no Diretório Interno da Aplicação</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {selectedBackup.isDownloaded
+                      ? "O backup encontra-se guardado e pronto no armazenamento interno do app."
+                      : "O ficheiro físico não se encontra descarregado localmente."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleBackupLocal(selectedBackup.id, selectedBackup.isDownloaded)}
+                    disabled={togglingId === selectedBackup.id}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      selectedBackup.isDownloaded ? "bg-emerald-600" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        selectedBackup.isDownloaded ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-xs font-bold ${selectedBackup.isDownloaded ? "text-emerald-700" : "text-slate-400"}`}>
+                    {selectedBackup.isDownloaded ? "Ligado" : "Desligado"}
+                  </span>
                 </div>
               </div>
 

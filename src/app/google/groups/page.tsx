@@ -25,6 +25,7 @@ export default function GoogleGroupsPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncingLocal, setSyncingLocal] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // Group Details Modal State
   const [selectedGroup, setSelectedGroup] = useState<any | null>(null);
@@ -99,6 +100,65 @@ export default function GoogleGroupsPage() {
       dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setSyncingLocal(false);
+    }
+  };
+
+  const handleToggleBackupLocal = async (backupId: string, currentIsDownloaded: boolean) => {
+    if (currentIsDownloaded) {
+      const confirmed = await confirmAction({
+        title: "Remover Backup Baixado?",
+        text: "Tem a certeza que deseja remover o backup baixado do armazenamento da aplicação? Esta ação libertará espaço em disco. Os metadados continuarão guardados no sistema.",
+        confirmText: "Sim, Remover Backup",
+        cancelText: "Cancelar",
+        icon: "warning",
+      });
+
+      if (!confirmed) return;
+
+      setTogglingId(backupId);
+      try {
+        const res = await fetch("/api/backups/toggle-local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ backupRequestId: backupId, action: "REMOVE" }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          toast.success("Backup Removido!", "A cópia local foi removida do armazenamento da aplicação.");
+          if (selectedGroup) openGroupDetails(selectedGroup);
+          fetchGroups();
+        } else {
+          dialog.error("Erro ao Remover", data.error || "Não foi possível remover o backup.");
+        }
+      } catch (err: any) {
+        dialog.error("Falha", err.message || "Erro inesperado.");
+      } finally {
+        setTogglingId(null);
+      }
+    } else {
+      setTogglingId(backupId);
+      showLoading("A Descarregar Backup...", "A descarregar e armazenar o ficheiro no diretório interno da aplicação...");
+      try {
+        const res = await fetch("/api/backups/toggle-local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ backupRequestId: backupId, action: "DOWNLOAD" }),
+        });
+        const data = await res.json();
+        hideLoading();
+        if (res.ok) {
+          toast.success("Download Concluído!", data.message || "Backup descarregado com sucesso.");
+          if (selectedGroup) openGroupDetails(selectedGroup);
+          fetchGroups();
+        } else {
+          dialog.error("Erro no Download", data.error || "Não foi possível descarregar o backup.");
+        }
+      } catch (err: any) {
+        hideLoading();
+        dialog.error("Falha", err.message || "Erro inesperado ao descarregar backup.");
+      } finally {
+        setTogglingId(null);
+      }
     }
   };
 
@@ -506,26 +566,79 @@ export default function GoogleGroupsPage() {
                   <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
                     {selectedGroup.backupRequests && selectedGroup.backupRequests.length > 0 ? (
                       selectedGroup.backupRequests.map((b: any) => (
-                        <div key={b.id} className="p-3 bg-white flex items-center justify-between">
+                        <div key={b.id} className="p-3.5 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
                             <div className="font-bold text-slate-800 flex items-center gap-2">
                               <span>Formato {b.format}</span>
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  b.status === "READY"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : b.status === "REMOVED_LOCAL"
+                                    ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                    : "bg-slate-100 text-slate-700"
+                                }`}
+                              >
                                 {b.status}
                               </span>
+                              {b.isDownloaded && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                  Guardado no App
+                                </span>
+                              )}
                             </div>
                             <div className="text-[11px] text-slate-400 mt-0.5">
-                              ID: {b.id} | Solicitado em {new Date(b.createdAt).toLocaleString("pt-PT")}
+                              ID: {b.id} | {new Date(b.createdAt).toLocaleString("pt-PT")}
                             </div>
                           </div>
-                          {b.artifacts && b.artifacts.length > 0 && (
-                            <a
-                              href={`/api/backups/${b.artifacts[0].id}/download`}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
-                            >
-                              <Download className="w-3.5 h-3.5" /> Transferir ({b.artifacts[0].storedFilename})
-                            </a>
-                          )}
+
+                          <div className="flex items-center gap-3">
+                            {/* Botão Liga / Desliga */}
+                            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                              <span className="text-[11px] font-bold text-slate-600">Baixar no App:</span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleBackupLocal(b.id, b.isDownloaded)}
+                                disabled={togglingId === b.id}
+                                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                                  b.isDownloaded ? "bg-emerald-600" : "bg-slate-300"
+                                }`}
+                                title={
+                                  b.isDownloaded
+                                    ? "Backup baixado no app (clique para remover cópia local)"
+                                    : "Descarregar backup para o app"
+                                }
+                              >
+                                <span
+                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                    b.isDownloaded ? "translate-x-5" : "translate-x-0"
+                                  }`}
+                                />
+                              </button>
+                              <span
+                                className={`text-[11px] font-bold ${
+                                  b.isDownloaded ? "text-emerald-700" : "text-slate-400"
+                                }`}
+                              >
+                                {togglingId === b.id ? (
+                                  <RefreshCw className="w-3 h-3 animate-spin text-slate-500 inline" />
+                                ) : b.isDownloaded ? (
+                                  "Ligado"
+                                ) : (
+                                  "Desligado"
+                                )}
+                              </span>
+                            </div>
+
+                            {b.artifacts && b.artifacts.length > 0 && (
+                              <a
+                                href={`/api/backups/${b.artifacts[0].id}/download`}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition"
+                              >
+                                <Download className="w-3.5 h-3.5" /> Transferir
+                              </a>
+                            )}
+                          </div>
                         </div>
                       ))
                     ) : (

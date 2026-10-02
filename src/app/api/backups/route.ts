@@ -4,6 +4,8 @@ import { requireAuth } from "@/lib/auth/session";
 import { enqueueJob } from "@/lib/queue/queues";
 import { logAudit } from "@/lib/audit/audit.service";
 
+import { backupDownloadService } from "@/lib/backups/backup-download.service";
+
 export async function GET(req: NextRequest) {
   try {
     await requireAuth(req);
@@ -61,14 +63,19 @@ export async function GET(req: NextRequest) {
       limit,
       totalPages: Math.ceil(total / limit),
       totalStorageBytes: totalBytesAggregate._sum.bytes ? totalBytesAggregate._sum.bytes.toString() : "0",
-      backups: backups.map((b) => ({
-        ...b,
-        artifacts: b.artifacts.map((a) => ({
-          ...a,
-          bytes: a.bytes.toString(),
-          files: a.files.map((f) => ({ ...f, bytes: f.bytes.toString() })),
-        })),
-      })),
+      backups: backups.map((b) => {
+        const localStatus = backupDownloadService.getBackupStatus(b);
+        return {
+          ...b,
+          isDownloaded: localStatus.isDownloaded,
+          localPath: localStatus.localPath,
+          artifacts: b.artifacts.map((a) => ({
+            ...a,
+            bytes: a.bytes.toString(),
+            files: a.files.map((f) => ({ ...f, bytes: f.bytes.toString() })),
+          })),
+        };
+      }),
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 401 });

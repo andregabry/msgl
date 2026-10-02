@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, serializeBigInt } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/session";
+import { backupDownloadService } from "@/lib/backups/backup-download.service";
 
 export async function GET(
   req: NextRequest,
@@ -39,7 +40,15 @@ export async function GET(
       return NextResponse.json({ error: "Utilizador Google não encontrado." }, { status: 404 });
     }
 
-    return NextResponse.json(serializeBigInt({ user }));
+    const userWithStatus = {
+      ...user,
+      backupRequests: user.backupRequests.map((b) => ({
+        ...b,
+        isDownloaded: backupDownloadService.getBackupStatus(b).isDownloaded,
+      })),
+    };
+
+    return NextResponse.json(serializeBigInt({ user: userWithStatus }));
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
