@@ -1,0 +1,620 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// 1. Integrations & Configuration
+// -----------------------------------------------------------------------------
+
+model IntegrationConnection {
+  id           String    @id @default(uuid()) @db.Uuid
+  provider     String    // GOOGLE_WORKSPACE, MICROSOFT_365
+  status       String    @default("NOT_CONFIGURED") // CONNECTED, ERROR, NOT_CONFIGURED
+  config       Json      @default("{}")
+  lastTestedAt DateTime? @map("last_tested_at")
+  lastSyncedAt DateTime? @map("last_synced_at")
+  error        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@unique([provider])
+  @@map("integration_connections")
+}
+
+// -----------------------------------------------------------------------------
+// 2. Google Workspace Entities
+// -----------------------------------------------------------------------------
+
+model GoogleUser {
+  id                String             @id @default(uuid()) @db.Uuid
+  providerId        String             @unique @map("provider_id")
+  primaryEmail      String             @unique @map("primary_email")
+  name              String?
+  givenName         String?            @map("given_name")
+  familyName        String?            @map("family_name")
+  fullName          String?            @map("full_name")
+  suspended         Boolean            @default(false)
+  archived          Boolean            @default(false)
+  orgUnitPath       String?            @map("org_unit_path")
+  creationTime      DateTime?          @map("creation_time")
+  lastLoginTime     DateTime?          @map("last_login_time")
+  isAdmin           Boolean            @default(false) @map("is_admin")
+  isDelegatedAdmin  Boolean            @default(false) @map("is_delegated_admin")
+  rawMetadata       Json               @default("{}") @map("raw_metadata")
+  lastSyncedAt      DateTime?          @map("last_synced_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  aliases           GoogleUserAlias[]
+  identityLinks     IdentityLink[]
+  backupRequests    BackupRequest[]
+
+  @@index([primaryEmail])
+  @@index([suspended])
+  @@map("google_users")
+}
+
+model GoogleUserAlias {
+  id           String     @id @default(uuid()) @db.Uuid
+  googleUserId String     @map("google_user_id") @db.Uuid
+  aliasEmail   String     @unique @map("alias_email")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  googleUser   GoogleUser @relation(fields: [googleUserId], references: [id], onDelete: Cascade)
+
+  @@index([aliasEmail])
+  @@map("google_user_aliases")
+}
+
+model GoogleGroup {
+  id                 String              @id @default(uuid()) @db.Uuid
+  providerId         String              @unique @map("provider_id")
+  email              String              @unique
+  name               String
+  description        String?
+  directMembersCount Int                 @default(0) @map("direct_members_count")
+  rawMetadata        Json                @default("{}") @map("raw_metadata")
+  lastSyncedAt       DateTime?           @map("last_synced_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  aliases            GoogleGroupAlias[]
+  members            GoogleGroupMember[]
+  backupRequests     BackupRequest[]
+  migrationMappings  MigrationMapping[]
+  migrationJobs      MigrationJob[]
+
+  @@index([email])
+  @@map("google_groups")
+}
+
+model GoogleGroupAlias {
+  id            String      @id @default(uuid()) @db.Uuid
+  googleGroupId String      @map("google_group_id") @db.Uuid
+  aliasEmail    String      @unique @map("alias_email")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  googleGroup   GoogleGroup @relation(fields: [googleGroupId], references: [id], onDelete: Cascade)
+
+  @@index([aliasEmail])
+  @@map("google_group_aliases")
+}
+
+model GoogleGroupMember {
+  id            String      @id @default(uuid()) @db.Uuid
+  googleGroupId String      @map("google_group_id") @db.Uuid
+  email         String
+  memberId      String?     @map("member_id")
+  role          String      @default("MEMBER") // OWNER, MANAGER, MEMBER
+  type          String      @default("USER")   // USER, GROUP, CUSTOMER
+  rawMetadata   Json        @default("{}") @map("raw_metadata")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  googleGroup   GoogleGroup @relation(fields: [googleGroupId], references: [id], onDelete: Cascade)
+
+  @@index([googleGroupId, email])
+  @@map("google_group_members")
+}
+
+// -----------------------------------------------------------------------------
+// 3. Microsoft 365 Entities
+// -----------------------------------------------------------------------------
+
+model MicrosoftUser {
+  id                 String    @id @default(uuid()) @db.Uuid
+  providerId         String    @unique @map("provider_id")
+  userPrincipalName  String    @unique @map("user_principal_name")
+  mail               String?
+  displayName        String?   @map("display_name")
+  accountEnabled     Boolean   @default(true) @map("account_enabled")
+  userType           String?   @map("user_type")
+  rawMetadata        Json      @default("{}") @map("raw_metadata")
+  lastSyncedAt       DateTime? @map("last_synced_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@index([userPrincipalName])
+  @@index([mail])
+  @@map("microsoft_users")
+}
+
+model MicrosoftMailbox {
+  id                        String             @id @default(uuid()) @db.Uuid
+  providerMailboxId         String             @unique @map("provider_mailbox_id")
+  displayName               String             @map("display_name")
+  primarySmtpAddress        String             @unique @map("primary_smtp_address")
+  recipientType             String             @default("UNKNOWN") @map("recipient_type") // USER_MAILBOX, SHARED_MAILBOX, ARCHIVE, UNKNOWN
+  archiveEnabled            Boolean            @default(false) @map("archive_enabled")
+  externalDirectoryObjectId String?            @map("external_directory_object_id")
+  rawMetadata               Json               @default("{}") @map("raw_metadata")
+  lastSyncedAt              DateTime?          @map("last_synced_at")
+  createdAt                 DateTime           @default(now()) @map("created_at")
+  updatedAt                 DateTime           @updatedAt @map("updated_at")
+
+  migrationMappings         MigrationMapping[]
+  migrationJobs             MigrationJob[]
+
+  @@index([primarySmtpAddress])
+  @@index([recipientType])
+  @@map("microsoft_mailboxes")
+}
+
+// -----------------------------------------------------------------------------
+// 4. App Internal Users & RBAC
+// -----------------------------------------------------------------------------
+
+model AppUser {
+  id                 String             @id @default(uuid()) @db.Uuid
+  email              String             @unique
+  displayName        String             @map("display_name")
+  role               String             @default("USER") // ADMIN, BACKUP_OPERATOR, MIGRATION_OPERATOR, AUDITOR, USER
+  isActive           Boolean            @default(true) @map("is_active")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  externalIdentities ExternalIdentity[]
+  identityLinks      IdentityLink[]
+  chatAccesses       ChatUserAccess[]
+  auditEvents        AuditEvent[]
+
+  @@index([email])
+  @@index([role])
+  @@map("app_users")
+}
+
+model ExternalIdentity {
+  id         String   @id @default(uuid()) @db.Uuid
+  appUserId  String   @map("app_user_id") @db.Uuid
+  provider   String   // GOOGLE, MICROSOFT_ENTRA, LOCAL
+  subjectId  String   @map("subject_id")
+  email      String
+  rawProfile Json     @default("{}") @map("raw_profile")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  appUser    AppUser  @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subjectId])
+  @@index([email])
+  @@map("external_identities")
+}
+
+model IdentityLink {
+  id           String     @id @default(uuid()) @db.Uuid
+  googleUserId String     @map("google_user_id") @db.Uuid
+  appUserId    String     @map("app_user_id") @db.Uuid
+  linkType     String     @default("AUTO_EMAIL") @map("link_type") // AUTO_EMAIL, MANUAL
+  confidence   String     @default("EXACT") // EXACT, ALIAS, MANUAL
+  verifiedBy   String?    @map("verified_by")
+  verifiedAt   DateTime?  @map("verified_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  googleUser   GoogleUser @relation(fields: [googleUserId], references: [id], onDelete: Cascade)
+  appUser      AppUser    @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@unique([googleUserId, appUserId])
+  @@map("identity_links")
+}
+
+// -----------------------------------------------------------------------------
+// 5. Backups & Google Vault Engine
+// -----------------------------------------------------------------------------
+
+model BackupRequest {
+  id             String           @id @default(uuid()) @db.Uuid
+  entityType     String           @map("entity_type") // GOOGLE_USER, GOOGLE_GROUP
+  entityId       String?          @map("entity_id") @db.Uuid
+  entityEmail    String           @map("entity_email")
+  serviceType    String           @map("service_type") // GMAIL, GOOGLE_CHAT, GOOGLE_GROUPS
+  format         String           @default("MBOX") // MBOX, PST, ZIP
+  status         String           @default("REQUESTED") 
+  // State machine: REQUESTED, CREATING_EXPORT, EXPORT_RUNNING, REMOTE_READY,
+  // DOWNLOADING, VERIFYING, DOWNLOADED, EXTRACTING, PROCESSING, INDEXING,
+  // READY, FAILED, CANCELLED, REMOTE_EXPIRED
+  requestedBy    String?          @map("requested_by")
+  criteria       Json             @default("{}")
+  dateRangeStart DateTime?        @map("date_range_start")
+  dateRangeEnd   DateTime?        @map("date_range_end")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  googleUser     GoogleUser?      @relation(fields: [entityId], references: [id], onDelete: SetNull, map: "fk_backup_user")
+  googleGroup    GoogleGroup?     @relation(fields: [entityId], references: [id], onDelete: SetNull, map: "fk_backup_group")
+  exports        BackupExport[]
+  artifacts      BackupArtifact[]
+  events         BackupEvent[]
+  chatArchives   ChatArchive[]
+  migrationJobs  MigrationJob[]
+
+  @@index([entityEmail])
+  @@index([serviceType])
+  @@index([status])
+  @@map("backup_requests")
+}
+
+model BackupExport {
+  id              String        @id @default(uuid()) @db.Uuid
+  backupRequestId String        @map("backup_request_id") @db.Uuid
+  matterId        String        @map("matter_id")
+  exportId        String        @map("export_id")
+  providerStatus  String        @map("provider_status")
+  providerStats   Json          @default("{}") @map("provider_stats")
+  remoteReadyAt   DateTime?     @map("remote_ready_at")
+  expiresAt       DateTime?     @map("expires_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  backupRequest   BackupRequest @relation(fields: [backupRequestId], references: [id], onDelete: Cascade)
+
+  @@index([backupRequestId])
+  @@index([exportId])
+  @@map("backup_exports")
+}
+
+model BackupArtifact {
+  id              String         @id @default(uuid()) @db.Uuid
+  backupRequestId String         @map("backup_request_id") @db.Uuid
+  relativePath    String         @map("relative_path")
+  originalFilename String        @map("original_filename")
+  storedFilename  String         @map("stored_filename")
+  bytes           BigInt         @default(0)
+  sha256          String
+  mimeType        String         @default("application/octet-stream") @map("mime_type")
+  origin          String         @default("VAULT_EXPORT") // VAULT_EXPORT, IMPORTED_LOCAL
+  isVerified      Boolean        @default(false) @map("is_verified")
+  verifiedAt      DateTime?      @map("verified_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  backupRequest   BackupRequest  @relation(fields: [backupRequestId], references: [id], onDelete: Cascade)
+  files           BackupFile[]
+  migrationJobs   MigrationJob[]
+
+  @@index([backupRequestId])
+  @@index([sha256])
+  @@map("backup_artifacts")
+}
+
+model BackupFile {
+  id               String         @id @default(uuid()) @db.Uuid
+  backupArtifactId String         @map("backup_artifact_id") @db.Uuid
+  relativePath     String         @map("relative_path")
+  filename         String
+  bytes            BigInt         @default(0)
+  sha256           String?
+  mimeType         String         @default("application/octet-stream") @map("mime_type")
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  backupArtifact   BackupArtifact @relation(fields: [backupArtifactId], references: [id], onDelete: Cascade)
+
+  @@index([backupArtifactId])
+  @@map("backup_files")
+}
+
+model BackupEvent {
+  id              String        @id @default(uuid()) @db.Uuid
+  backupRequestId String        @map("backup_request_id") @db.Uuid
+  fromStatus      String?       @map("from_status")
+  toStatus        String        @map("to_status")
+  message         String
+  errorDetails    Json          @default("{}") @map("error_details")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  backupRequest   BackupRequest @relation(fields: [backupRequestId], references: [id], onDelete: Cascade)
+
+  @@index([backupRequestId])
+  @@map("backup_events")
+}
+
+// -----------------------------------------------------------------------------
+// 6. Google Chat Archive & Search
+// -----------------------------------------------------------------------------
+
+model ChatArchive {
+  id               String          @id @default(uuid()) @db.Uuid
+  backupRequestId  String          @map("backup_request_id") @db.Uuid
+  totalSpaces      Int             @default(0) @map("total_spaces")
+  totalMessages    Int             @default(0) @map("total_messages")
+  totalAttachments Int             @default(0) @map("total_attachments")
+  processedAt      DateTime?       @map("processed_at")
+  status           String          @default("PENDING") // PENDING, PROCESSING, READY, FAILED
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  backupRequest    BackupRequest   @relation(fields: [backupRequestId], references: [id], onDelete: Cascade)
+  spaces           ChatSpace[]
+
+  @@index([backupRequestId])
+  @@map("chat_archives")
+}
+
+model ChatSpace {
+  id              String          @id @default(uuid()) @db.Uuid
+  chatArchiveId   String?         @map("chat_archive_id") @db.Uuid
+  providerSpaceId String?         @map("provider_space_id")
+  displayName     String          @map("display_name")
+  spaceType       String          @default("SPACE") @map("space_type") // DIRECT_MESSAGE, GROUP_CHAT, SPACE
+  rawMetadata     Json            @default("{}") @map("raw_metadata")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  chatArchive     ChatArchive?    @relation(fields: [chatArchiveId], references: [id], onDelete: SetNull)
+  threads         ChatThread[]
+  messages        ChatMessage[]
+
+  @@index([providerSpaceId])
+  @@index([spaceType])
+  @@map("chat_spaces")
+}
+
+model ChatThread {
+  id               String        @id @default(uuid()) @db.Uuid
+  chatSpaceId      String        @map("chat_space_id") @db.Uuid
+  providerThreadId String?       @map("provider_thread_id")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  chatSpace        ChatSpace     @relation(fields: [chatSpaceId], references: [id], onDelete: Cascade)
+  messages         ChatMessage[]
+
+  @@index([chatSpaceId])
+  @@index([providerThreadId])
+  @@map("chat_threads")
+}
+
+model ChatMessage {
+  id                String                   @id @default(uuid()) @db.Uuid
+  chatSpaceId       String                   @map("chat_space_id") @db.Uuid
+  chatThreadId      String?                  @map("chat_thread_id") @db.Uuid
+  providerMessageId String?                  @map("provider_message_id")
+  sourceHash        String                   @unique @map("source_hash") // Deduplication key
+  senderId          String?                  @map("sender_id")
+  senderName        String?                  @map("sender_name")
+  senderEmail       String?                  @map("sender_email")
+  text              String?
+  formattedText     String?                  @map("formatted_text")
+  sentAt            DateTime                 @map("sent_at")
+  editedAt          DateTime?                @map("edited_at")
+  isDeleted         Boolean                  @default(false) @map("is_deleted")
+  replyToId         String?                  @map("reply_to_id")
+  rawMetadata       Json                     @default("{}") @map("raw_metadata")
+  createdAt         DateTime                 @default(now()) @map("created_at")
+
+  chatSpace         ChatSpace                @relation(fields: [chatSpaceId], references: [id], onDelete: Cascade)
+  chatThread        ChatThread?              @relation(fields: [chatThreadId], references: [id], onDelete: SetNull)
+  participants      ChatMessageParticipant[]
+  attachments       ChatAttachment[]
+  userAccess        ChatUserAccess[]
+
+  @@index([chatSpaceId])
+  @@index([sentAt])
+  @@index([senderEmail])
+  @@index([sourceHash])
+  @@map("chat_messages")
+}
+
+model ChatMessageParticipant {
+  id            String      @id @default(uuid()) @db.Uuid
+  chatMessageId String      @map("chat_message_id") @db.Uuid
+  userEmail     String      @map("user_email")
+  displayName   String?     @map("display_name")
+  role          String      @default("PARTICIPANT")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  chatMessage   ChatMessage @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+
+  @@index([chatMessageId])
+  @@index([userEmail])
+  @@map("chat_message_participants")
+}
+
+model ChatAttachment {
+  id            String      @id @default(uuid()) @db.Uuid
+  chatMessageId String      @map("chat_message_id") @db.Uuid
+  filename      String
+  relativePath  String      @map("relative_path")
+  bytes         BigInt      @default(0)
+  sha256        String?
+  mimeType      String      @default("application/octet-stream") @map("mime_type")
+  scanStatus    String      @default("CLEAN") @map("scan_status") // CLEAN, INFECTED, PENDING
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  chatMessage   ChatMessage @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+
+  @@index([chatMessageId])
+  @@map("chat_attachments")
+}
+
+model ChatUserAccess {
+  id            String      @id @default(uuid()) @db.Uuid
+  chatMessageId String      @map("chat_message_id") @db.Uuid
+  appUserId     String      @map("app_user_id") @db.Uuid
+  grantedVia    String      @default("PARTICIPANT") @map("granted_via") // SENDER, PARTICIPANT, ADMIN_AUDIT
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  chatMessage   ChatMessage @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+  appUser       AppUser     @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@unique([chatMessageId, appUserId])
+  @@index([appUserId])
+  @@map("chat_user_access")
+}
+
+// -----------------------------------------------------------------------------
+// 7. Migration Engine (Google Group -> Microsoft Shared Mailbox)
+// -----------------------------------------------------------------------------
+
+model MigrationMapping {
+  id               String            @id @default(uuid()) @db.Uuid
+  sourceGroupId    String            @map("source_group_id") @db.Uuid
+  sourceGroupEmail String            @map("source_group_email")
+  targetMailboxId  String            @map("target_mailbox_id") @db.Uuid
+  targetEmail      String            @map("target_email")
+  confidence       String            @default("MANUAL") // EXACT, ALIAS, MANUAL, NONE
+  isConfirmed      Boolean           @default(false) @map("is_confirmed")
+  confirmedBy      String?           @map("confirmed_by")
+  confirmedAt      DateTime?         @map("confirmed_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  sourceGroup      GoogleGroup       @relation(fields: [sourceGroupId], references: [id], onDelete: Cascade)
+  targetMailbox    MicrosoftMailbox  @relation(fields: [targetMailboxId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceGroupId, targetMailboxId])
+  @@index([sourceGroupEmail])
+  @@index([targetEmail])
+  @@map("migration_mappings")
+}
+
+model MigrationJob {
+  id                    String            @id @default(uuid()) @db.Uuid
+  sourceGroupId         String?           @map("source_group_id") @db.Uuid
+  sourceGroupEmail      String            @map("source_group_email")
+  targetMailboxId       String?           @map("target_mailbox_id") @db.Uuid
+  targetMailboxEmail    String            @map("target_mailbox_email")
+  backupRequestId       String?           @map("backup_request_id") @db.Uuid
+  backupArtifactId      String?           @map("backup_artifact_id") @db.Uuid
+  status                String            @default("PREPARING")
+  // State machine: PREPARING, VALIDATING, READY_TO_IMPORT, AWAITING_PURVIEW_JOB,
+  // IMPORTING, COMPLETED, FAILED, CANCELLED
+  totalItems            Int               @default(0) @map("total_items")
+  validItems            Int               @default(0) @map("valid_items")
+  duplicateItems        Int               @default(0) @map("duplicate_items")
+  importedItems         Int               @default(0) @map("imported_items")
+  skippedItems          Int               @default(0) @map("skipped_items")
+  failedItems           Int               @default(0) @map("failed_items")
+  purviewJobId          String?           @map("purview_job_id")
+  purviewMappingCsvPath String?           @map("purview_mapping_csv_path")
+  azcopyStatus          String?           @map("azcopy_status")
+  reportPath            String?           @map("report_path")
+  startedAt             DateTime?         @map("started_at")
+  completedAt           DateTime?         @map("completed_at")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  sourceGroup           GoogleGroup?      @relation(fields: [sourceGroupId], references: [id], onDelete: SetNull)
+  targetMailbox         MicrosoftMailbox? @relation(fields: [targetMailboxId], references: [id], onDelete: SetNull)
+  backupRequest         BackupRequest?    @relation(fields: [backupRequestId], references: [id], onDelete: SetNull)
+  backupArtifact        BackupArtifact?   @relation(fields: [backupArtifactId], references: [id], onDelete: SetNull)
+  items                 MigrationItem[]
+  events                MigrationEvent[]
+
+  @@index([sourceGroupEmail])
+  @@index([targetMailboxEmail])
+  @@index([status])
+  @@map("migration_jobs")
+}
+
+model MigrationItem {
+  id              String       @id @default(uuid()) @db.Uuid
+  migrationJobId  String       @map("migration_job_id") @db.Uuid
+  sourceMessageId String?      @map("source_message_id")
+  sourceHash      String       @map("source_hash") // Deduplication hash
+  dedupKey        String       @map("dedup_key")
+  dateUtc         DateTime?    @map("date_utc")
+  subject         String?
+  fromAddr        String?      @map("from_addr")
+  toAddrs         String?      @map("to_addrs")
+  sizeBytes       BigInt       @default(0) @map("size_bytes")
+  status          String       @default("PENDING")
+  // Item status: PENDING, PARSED, VALIDATED, DUPLICATE, READY, IMPORTING,
+  // IMPORTED, SKIPPED, FAILED, SKIPPED_TOO_LARGE
+  targetMessageId String?      @map("target_message_id")
+  errorMessage    String?      @map("error_message")
+  importedAt      DateTime?    @map("imported_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  migrationJob    MigrationJob @relation(fields: [migrationJobId], references: [id], onDelete: Cascade)
+
+  @@unique([migrationJobId, sourceHash])
+  @@index([migrationJobId, status])
+  @@index([dedupKey])
+  @@map("migration_items")
+}
+
+model MigrationEvent {
+  id             String       @id @default(uuid()) @db.Uuid
+  migrationJobId String       @map("migration_job_id") @db.Uuid
+  step           String
+  status         String
+  message        String
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  migrationJob   MigrationJob @relation(fields: [migrationJobId], references: [id], onDelete: Cascade)
+
+  @@index([migrationJobId])
+  @@map("migration_events")
+}
+
+// -----------------------------------------------------------------------------
+// 8. Background Jobs & Asynchronous Queues
+// -----------------------------------------------------------------------------
+
+model BackgroundJob {
+  id          String    @id @default(uuid()) @db.Uuid
+  queueName   String    @map("queue_name")
+  jobType     String    @map("job_type")
+  payload     Json      @default("{}")
+  status      String    @default("PENDING") // PENDING, RUNNING, COMPLETED, FAILED, CANCELLED
+  progress    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  error       String?
+  startedAt   DateTime? @map("started_at")
+  finishedAt  DateTime? @map("finished_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([queueName, status])
+  @@index([jobType])
+  @@map("background_jobs")
+}
+
+// -----------------------------------------------------------------------------
+// 9. Immutable Audit Trail
+// -----------------------------------------------------------------------------
+
+model AuditEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String   // LOGIN, LOGOUT, GOOGLE_SYNC, MICROSOFT_SYNC, BACKUP_REQUESTED, BACKUP_DOWNLOADED, etc.
+  entityType  String   @map("entity_type") // USER, GROUP, BACKUP, CHAT, MIGRATION, INTEGRATION
+  entityId    String?  @map("entity_id")
+  provider    String?  // GOOGLE, MICROSOFT, SYSTEM
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actorUser   AppUser? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_events")
+}

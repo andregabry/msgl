@@ -16,6 +16,9 @@ dist/
 bin/
 obj/
 *.egg-info/
+node_modules/
+.next/
+*.tsbuildinfo
 
 # Credenciais e Segredos Locais
 config/*.local.psd1

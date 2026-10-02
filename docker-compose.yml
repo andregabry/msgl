@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: migrate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-KckHkFkJxY66TeFof6BkVNVhdxFJLFM0oqBp5VwjT0U}
+      POSTGRES_DB: ${POSTGRES_DB:-migrate_system}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: migrate-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: migrate-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:KckHkFkJxY66TeFof6BkVNVhdxFJLFM0oqBp5VwjT0U@postgres:5432/migrate_system?schema=public
+      REDIS_URL: redis://redis:6379
+      BACKUP_STORAGE_ROOT: /data/backups
+      NODE_ENV: production
+    volumes:
+      - backup_storage:/data/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: migrate-worker
+    command: ["npm", "run", "worker"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:KckHkFkJxY66TeFof6BkVNVhdxFJLFM0oqBp5VwjT0U@postgres:5432/migrate_system?schema=public
+      REDIS_URL: redis://redis:6379
+      BACKUP_STORAGE_ROOT: /data/backups
+      NODE_ENV: production
+    volumes:
+      - backup_storage:/data/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  backup_storage:
