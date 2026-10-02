@@ -16,6 +16,7 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
+import { toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
 export default function GoogleAccountsPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -53,17 +54,20 @@ export default function GoogleAccountsPage() {
 
   const handleSync = async () => {
     setSyncing(true);
+    showLoading("A Sincronizar Utilizadores Google", "A ligar à Google Admin SDK Directory API...");
     try {
       const res = await fetch("/api/google/users", { method: "POST" });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        alert(`Sincronização concluída com sucesso! Total: ${data.totalSynced}`);
+        toast.success("Sincronização Concluída!", `Total de utilizadores sincronizados: ${data.totalSynced}`);
         fetchUsers();
       } else {
-        alert(`Erro na sincronização: ${data.error}`);
+        dialog.error("Erro na Sincronização", data.error || "Não foi possível concluir a sincronização.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha de Comunicação", err.message || "Erro inesperado.");
     } finally {
       setSyncing(false);
     }
@@ -86,8 +90,18 @@ export default function GoogleAccountsPage() {
 
   const handleRequestBackup = async (serviceType: "GMAIL" | "GOOGLE_CHAT") => {
     if (!selectedUser) return;
+    const serviceName = serviceType === "GMAIL" ? "Gmail" : "Google Chat";
+    const confirmed = await confirmAction({
+      title: `Solicitar Backup de ${serviceName}?`,
+      text: `Será criada uma exportação oficial no Google Vault para a conta ${selectedUser.primaryEmail}. O download será realizado automaticamente assim que estiver concluído.`,
+      confirmText: "Sim, Solicitar Backup",
+      icon: "question",
+    });
+
+    if (!confirmed) return;
+
     setActionLoading(true);
-    setActionMessage(null);
+    showLoading(`A criar exportação no Vault...`, `A submeter pedido de exportação para ${selectedUser.primaryEmail}...`);
     try {
       const res = await fetch("/api/backups", {
         method: "POST",
@@ -100,14 +114,16 @@ export default function GoogleAccountsPage() {
         }),
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        setActionMessage(`Backup ${serviceType} solicitado com sucesso via Google Vault!`);
+        toast.success("Backup Solicitado com Sucesso!", `Exportação ${serviceName} iniciada no Google Vault.`);
         openUserDetails(selectedUser);
       } else {
-        setActionMessage(`Erro ao solicitar: ${data.error}`);
+        dialog.error("Erro ao Solicitar Backup", data.error || "Não foi possível criar a exportação.");
       }
     } catch (err: any) {
-      setActionMessage(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha de Comunicação", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }
@@ -115,8 +131,17 @@ export default function GoogleAccountsPage() {
 
   const handleActivateInternal = async () => {
     if (!selectedUser) return;
+    const confirmed = await confirmAction({
+      title: "Ativar como Utilizador da Plataforma?",
+      text: `O colaborador ${selectedUser.fullName || selectedUser.primaryEmail} receberá permissão para iniciar sessão na aplicação e consultar o arquivo histórico dos seus Google Chats.`,
+      confirmText: "Ativar Acesso do Colaborador",
+      icon: "question",
+    });
+
+    if (!confirmed) return;
+
     setActionLoading(true);
-    setActionMessage(null);
+    showLoading("A Ativar Colaborador...", "A criar conta de utilizador interno e permissões de acesso...");
     try {
       const res = await fetch("/api/admin/users/activate", {
         method: "POST",
@@ -127,15 +152,17 @@ export default function GoogleAccountsPage() {
         }),
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        setActionMessage("Utilizador ativado com sucesso como utilizador interno da plataforma!");
+        toast.success("Colaborador Ativado!", "Conta interna criada e associada com sucesso.");
         openUserDetails(selectedUser);
         fetchUsers();
       } else {
-        setActionMessage(`Erro: ${data.error}`);
+        dialog.error("Erro na Ativação", data.error || "Não foi possível ativar o utilizador.");
       }
     } catch (err: any) {
-      setActionMessage(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }

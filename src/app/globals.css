@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "sweetalert2/dist/sweetalert2.min.css";
+
 :root {
   --color-navy: #223546;
   --color-orange: #e95c0c;
@@ -141,3 +143,49 @@ body {
   background-color: rgba(255, 255, 255, 0.04) !important;
   border-left: 4px solid rgba(233, 92, 12, 0.4) !important;
 }
+
+/* SweetAlert2 Platform Theme Customization */
+.swal2-container {
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  background-color: rgba(15, 23, 42, 0.72) !important;
+  z-index: 99999 !important;
+}
+
+.swal2-popup.swal2-toast {
+  background: #1c2836 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  color: #ffffff !important;
+  border-radius: 0.75rem !important;
+}
+
+.swal2-popup.swal2-modal {
+  background: #1c2836 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  color: #ffffff !important;
+}
+
+.swal2-title {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+}
+
+.swal2-html-container {
+  color: #cbd5e1 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+.swal2-timer-progress-bar {
+  background: #e95c0c !important;
+}
+
+.swal2-actions {
+  gap: 0.75rem !important;
+  margin-top: 1.5rem !important;
+}
+

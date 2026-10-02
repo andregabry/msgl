@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Filter,
 } from "lucide-react";
+import { toast, dialog } from "@/lib/swal";
 
 export default function MyChatsPage() {
   const [spaces, setSpaces] = useState<any[]>([]);
@@ -83,9 +84,16 @@ export default function MyChatsPage() {
       if (res.ok) {
         const data = await res.json();
         setMessages(data.results || []);
+        if (data.results && data.results.length === 0) {
+          toast.info("Nenhuma mensagem encontrada", "Tente pesquisar por outros termos ou ampliar os filtros.");
+        } else {
+          toast.success("Pesquisa Concluída", `${data.results.length} mensagens encontradas no arquivo.`);
+        }
+      } else {
+        toast.error("Erro na Pesquisa", "Não foi possível pesquisar no arquivo histórico.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      toast.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setLoadingMessages(false);
     }

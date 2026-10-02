@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Cloud, Search, RefreshCw, CheckCircle2, XCircle, Mail, User } from "lucide-react";
+import { toast, dialog, showLoading, hideLoading } from "@/lib/swal";
 
 export default function MicrosoftAccountsPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -33,17 +34,20 @@ export default function MicrosoftAccountsPage() {
 
   const handleSync = async () => {
     setSyncing(true);
+    showLoading("A Sincronizar Microsoft Entra ID...", "A consultar Microsoft Graph API (/v1.0/users)...");
     try {
       const res = await fetch("/api/microsoft/users", { method: "POST" });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        alert(`Sincronização Microsoft Entra concluída! Total: ${data.totalSynced}`);
+        toast.success("Sincronização Concluída!", `Total de utilizadores sincronizados: ${data.totalSynced}`);
         fetchUsers();
       } else {
-        alert(`Erro: ${data.error}`);
+        dialog.error("Erro na Sincronização Microsoft", data.error || "Não foi possível sincronizar utilizadores.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha de Comunicação", err.message || "Erro inesperado.");
     } finally {
       setSyncing(false);
     }

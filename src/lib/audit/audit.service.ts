@@ -18,7 +18,8 @@ export type AuditAction =
   | "MIGRATION_FINISHED"
   | "MIGRATION_FAILED"
   | "INTEGRATION_CONFIG_CHANGED"
-  | "USER_ACTIVATED";
+  | "USER_ACTIVATED"
+  | "USER_ROLE_ASSIGNED";
 
 export interface LogAuditParams {
   actorUserId?: string | null;

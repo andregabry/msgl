@@ -14,6 +14,7 @@ import {
   RefreshCw,
   ExternalLink,
 } from "lucide-react";
+import { toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
 export default function MigrationHubPage() {
   const [groups, setGroups] = useState<any[]>([]);
@@ -77,16 +78,26 @@ export default function MigrationHubPage() {
     setLoadingReadiness(true);
     setReadiness(null);
     setMessage(null);
+    showLoading("A Validar Pré-Requisitos...", "A verificar backups locais e integridade da mailbox de destino...");
     try {
       const res = await fetch(
         `/api/migration/readiness?groupEmail=${encodeURIComponent(selectedGroupEmail)}&targetMailbox=${encodeURIComponent(selectedMailboxEmail)}`
       );
+      const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        const data = await res.json();
         setReadiness(data);
+        if (data.ready) {
+          toast.success("Tudo Pronto para Migração!", "Backup PST validado e mailbox Microsoft pronta.");
+        } else {
+          toast.warning("Pré-requisitos Pendentes", "Consulte o checklist de validação abaixo.");
+        }
+      } else {
+        dialog.error("Erro na Validação", data.error || "Falha na verificação de conformidade.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setLoadingReadiness(false);
     }
@@ -94,8 +105,18 @@ export default function MigrationHubPage() {
 
   const handlePrepare = async () => {
     if (!selectedGroupEmail || !selectedMailboxEmail) return;
+    const confirmed = await confirmAction({
+      title: "Preparar Migração Microsoft Purview?",
+      text: `Deseja associar o grupo ${selectedGroupEmail} à caixa partilhada ${selectedMailboxEmail} e gerar o manifesto oficial CSV do Microsoft Purview?`,
+      confirmText: "Sim, Preparar Pacote",
+      icon: "question",
+    });
+
+    if (!confirmed) return;
+
     setActionLoading(true);
     setMessage(null);
+    showLoading("A Preparar Migração...", "A gerar ficheiro CSV de mapeamento oficial e registo no histórico...");
     try {
       const res = await fetch("/api/migration/prepare", {
         method: "POST",
@@ -106,34 +127,54 @@ export default function MigrationHubPage() {
         }),
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        setMessage("Migração preparada com sucesso! Mapeamento CSV gerado.");
+        dialog.success(
+          "Migração Preparada com Sucesso!",
+          "O lote de migração foi criado e o CSV de mapeamento oficial do Purview foi gerado. Consulte a tabela de trabalhos abaixo para o comando AzCopy."
+        );
         fetchData();
       } else {
-        setMessage(`Erro ao preparar migração: ${data.error}`);
+        dialog.error("Erro ao Preparar Migração", data.error || "Falha na preparação.");
       }
     } catch (err: any) {
-      setMessage(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleTriggerImport = async (jobId: string) => {
+    const confirmed = await confirmAction({
+      title: "Confirmar Upload AzCopy?",
+      text: "Confirma que os ficheiros PST foram enviados com sucesso via AzCopy para o Azure Blob Storage da Microsoft através da SAS URL temporária?",
+      confirmText: "Sim, Confirmar Upload",
+      icon: "question",
+    });
+
+    if (!confirmed) return;
+
     setActionLoading(true);
+    showLoading("A Registar Estado...", "A atualizar o trabalho para aguardar processamento no Microsoft Purview...");
     try {
       const res = await fetch(`/api/migration/jobs/${jobId}/import`, {
         method: "POST",
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        alert(data.message || "A aguardar execução no Microsoft Purview.");
+        dialog.info(
+          "Aguardando Execução no Purview",
+          data.message || "O trabalho está pronto. Aceda ao portal de conformidade do Microsoft Purview para iniciar a análise e importação."
+        );
         fetchData();
       } else {
-        alert(`Erro: ${data.error}`);
+        dialog.error("Erro", data.error || "Não foi possível avançar o estado.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }
@@ -141,6 +182,7 @@ export default function MigrationHubPage() {
 
   const handleSavePurviewJobId = async () => {
     if (!activeJobForPurview || !purviewJobIdInput.trim()) return;
+    showLoading("A Registar Trabalho...", "A associar o ID de Trabalho do Microsoft Purview...");
     try {
       const res = await fetch(`/api/migration/jobs/${activeJobForPurview.id}/import`, {
         method: "PATCH",
@@ -150,14 +192,19 @@ export default function MigrationHubPage() {
           status: "IMPORTING",
         }),
       });
+      const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        alert("ID de Trabalho do Microsoft Purview registado com sucesso!");
+        toast.success("ID Registado com Sucesso!", "Trabalho em processamento ativo pela Microsoft.");
         setActiveJobForPurview(null);
         setPurviewJobIdInput("");
         fetchData();
+      } else {
+        dialog.error("Erro ao Registar ID", data.error || "Falha na atualização.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     }
   };
 

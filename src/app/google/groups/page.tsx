@@ -14,6 +14,7 @@ import {
   X,
   FileSpreadsheet,
 } from "lucide-react";
+import { toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
 export default function GoogleGroupsPage() {
   const [groups, setGroups] = useState<any[]>([]);
@@ -56,17 +57,20 @@ export default function GoogleGroupsPage() {
 
   const handleSync = async () => {
     setSyncing(true);
+    showLoading("A Sincronizar Grupos...", "A consultar Google Admin SDK Directory API...");
     try {
       const res = await fetch("/api/google/groups", { method: "POST" });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        alert(`Sincronização de grupos concluída! Total: ${data.totalSynced}`);
+        toast.success("Sincronização Concluída!", `Total de grupos sincronizados: ${data.totalSynced}`);
         fetchGroups();
       } else {
-        alert(`Erro na sincronização: ${data.error}`);
+        dialog.error("Erro na Sincronização", data.error || "Não foi possível sincronizar os grupos.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha de Comunicação", err.message || "Erro inesperado.");
     } finally {
       setSyncing(false);
     }
@@ -100,8 +104,21 @@ export default function GoogleGroupsPage() {
 
   const handleRequestVaultBackup = async (format: "PST" | "MBOX") => {
     if (!selectedGroup) return;
+    const confirmed = await confirmAction({
+      title: `Solicitar Backup do Grupo (${format})?`,
+      text: `Será submetida uma exportação oficial no Google Vault para o grupo ${selectedGroup.email}. ${
+        format === "PST"
+          ? "Formato PST recomendado para a migração para o Microsoft Purview."
+          : "Formato MBOX ideal para retenção pura."
+      }`,
+      confirmText: "Sim, Solicitar Backup",
+      icon: "question",
+    });
+
+    if (!confirmed) return;
+
     setActionLoading(true);
-    setActionMessage(null);
+    showLoading("A Criar Exportação no Google Vault...", `A submeter pedido ${format} para ${selectedGroup.email}...`);
     try {
       const res = await fetch("/api/backups", {
         method: "POST",
@@ -114,14 +131,16 @@ export default function GoogleGroupsPage() {
         }),
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        setActionMessage(`Backup do Google Group (${format}) solicitado com sucesso via Google Vault!`);
+        toast.success("Backup do Grupo Solicitado!", `Exportação ${format} criada com sucesso no Google Vault.`);
         openGroupDetails(selectedGroup);
       } else {
-        setActionMessage(`Erro ao solicitar backup: ${data.error}`);
+        dialog.error("Erro ao Solicitar Backup", data.error || "Não foi possível criar a exportação.");
       }
     } catch (err: any) {
-      setActionMessage(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }
@@ -130,14 +149,26 @@ export default function GoogleGroupsPage() {
   const handleCheckReadiness = async () => {
     if (!selectedGroup || !targetMailboxEmail) return;
     setActionLoading(true);
+    showLoading("A Validar Pré-Requisitos...", "A verificar existência de backup PST e conformidade da mailbox...");
     try {
-      const res = await fetch(`/api/migration/readiness?groupEmail=${encodeURIComponent(selectedGroup.email)}&targetMailbox=${encodeURIComponent(targetMailboxEmail)}`);
+      const res = await fetch(
+        `/api/migration/readiness?groupEmail=${encodeURIComponent(selectedGroup.email)}&targetMailbox=${encodeURIComponent(targetMailboxEmail)}`
+      );
+      const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        const data = await res.json();
         setReadiness(data);
+        if (data.ready) {
+          toast.success("Validação Concluída!", "Todos os pré-requisitos técnicos foram satisfeitos.");
+        } else {
+          toast.warning("Avisos de Conformidade", "Verifique os pontos pendentes antes de prosseguir.");
+        }
+      } else {
+        dialog.error("Erro de Validação", data.error || "Falha na verificação.");
       }
     } catch (err: any) {
-      alert(`Falha na validação: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha na Validação", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }
@@ -145,8 +176,17 @@ export default function GoogleGroupsPage() {
 
   const handlePrepareMigration = async () => {
     if (!selectedGroup || !targetMailboxEmail) return;
+    const confirmed = await confirmAction({
+      title: "Preparar Migração Microsoft Purview?",
+      text: `Deseja gerar o ficheiro oficial de mapeamento CSV e preparar o lote para a caixa partilhada ${targetMailboxEmail}?`,
+      confirmText: "Sim, Preparar Migração",
+      icon: "question",
+    });
+
+    if (!confirmed) return;
+
     setActionLoading(true);
-    setActionMessage(null);
+    showLoading("A Preparar Migração...", "A gerar ficheiro CSV oficial do Purview e registo de trabalho...");
     try {
       const res = await fetch("/api/migration/prepare", {
         method: "POST",
@@ -157,14 +197,19 @@ export default function GoogleGroupsPage() {
         }),
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        setActionMessage("Migração preparada com sucesso! Ficheiro de mapeamento Microsoft Purview gerado.");
+        dialog.success(
+          "Migração Preparada com Sucesso!",
+          `O trabalho foi criado e o manifesto CSV oficial do Microsoft Purview foi gerado. Aceda ao separador 'Migração' para concluir o upload.`
+        );
         openGroupDetails(selectedGroup);
       } else {
-        setActionMessage(`Erro: ${data.error}`);
+        dialog.error("Erro na Preparação", data.error || "Não foi possível preparar o pacote.");
       }
     } catch (err: any) {
-      setActionMessage(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setActionLoading(false);
     }

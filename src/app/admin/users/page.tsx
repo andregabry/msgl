@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Users, Shield, UserCheck, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Users, Shield, UserCheck, RefreshCw, CheckCircle2, UserPlus, Edit3 } from "lucide-react";
+import { AppSwal, toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
 export default function PlatformUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -26,17 +27,136 @@ export default function PlatformUsersPage() {
     fetchUsers();
   }, []);
 
+  const handleCreateUser = async () => {
+    const { value: formValues } = await AppSwal.fire({
+      title: "Novo Utilizador da Plataforma",
+      html: `
+        <div class="space-y-4 text-left pt-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1">Nome de Exibição:</label>
+            <input id="swal-name" class="w-full bg-[#121921] border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none" placeholder="Ex: Maria Santos">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1">E-mail Principal:</label>
+            <input id="swal-email" type="email" class="w-full bg-[#121921] border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none" placeholder="colaborador@dominio.pt">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1">Função / Perfil RBAC:</label>
+            <select id="swal-role" class="w-full bg-[#121921] border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none">
+              <option value="USER">USER (Acesso ao Portal 'Meus Chats')</option>
+              <option value="BACKUP_OPERATOR">BACKUP_OPERATOR (Gestão de Backups Vault)</option>
+              <option value="MIGRATION_OPERATOR">MIGRATION_OPERATOR (Preparação & Purview)</option>
+              <option value="AUDITOR">AUDITOR (Visualização de Auditoria)</option>
+              <option value="ADMIN">ADMIN (Acesso Integral)</option>
+            </select>
+          </div>
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Guardar Utilizador",
+      cancelButtonText: "Cancelar",
+      preConfirm: () => {
+        const name = (document.getElementById("swal-name") as HTMLInputElement)?.value.trim();
+        const email = (document.getElementById("swal-email") as HTMLInputElement)?.value.trim();
+        const role = (document.getElementById("swal-role") as HTMLSelectElement)?.value;
+
+        if (!name || !email) {
+          AppSwal.showValidationMessage("Por favor preencha o nome e o e-mail.");
+          return false;
+        }
+        return { displayName: name, email, role };
+      },
+    });
+
+    if (!formValues) return;
+
+    showLoading("A Criar Utilizador...", "A registar novo colaborador na base de dados...");
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formValues),
+      });
+      const data = await res.json();
+      hideLoading();
+      if (res.ok) {
+        toast.success("Utilizador Criado!", `Acesso concedido a ${formValues.email} com a função ${formValues.role}.`);
+        fetchUsers();
+      } else {
+        dialog.error("Erro ao Criar Utilizador", data.error || "Não foi possível guardar o utilizador.");
+      }
+    } catch (err: any) {
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
+    }
+  };
+
+  const handleEditRole = async (user: any) => {
+    const { value: newRole } = await AppSwal.fire({
+      title: `Alterar Função de ${user.displayName}`,
+      input: "select",
+      inputOptions: {
+        USER: "USER (Apenas Portal 'Meus Chats')",
+        BACKUP_OPERATOR: "BACKUP_OPERATOR (Gestão de Backups Vault)",
+        MIGRATION_OPERATOR: "MIGRATION_OPERATOR (Preparação & Purview)",
+        AUDITOR: "AUDITOR (Acesso a Registos de Auditoria)",
+        ADMIN: "ADMIN (Acesso Integral ao Sistema)",
+      },
+      inputValue: user.role,
+      showCancelButton: true,
+      confirmButtonText: "Atualizar Perfil",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!newRole || newRole === user.role) return;
+
+    showLoading("A Atualizar Perfil...", `A atribuir a função ${newRole}...`);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          displayName: user.displayName,
+          role: newRole,
+        }),
+      });
+      const data = await res.json();
+      hideLoading();
+      if (res.ok) {
+        toast.success("Perfil Atualizado!", `Função de ${user.email} alterada para ${newRole}.`);
+        fetchUsers();
+      } else {
+        dialog.error("Erro ao Atualizar Perfil", data.error || "Falha na atualização.");
+      }
+    } catch (err: any) {
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-[#223546] flex items-center gap-2">
-          <Shield className="w-6 h-6 text-[#e95c0c]" />
-          Utilizadores Internos & Perfis RBAC
-        </h1>
-        <p className="text-sm text-slate-500 font-medium">
-          Controlo de acessos à plataforma, mapeamento de identidades externas (Google OIDC) e atribuição de funções operacionais.
-        </p>
+      {/* Title & Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-[#223546] flex items-center gap-2">
+            <Shield className="w-6 h-6 text-[#e95c0c]" />
+            Utilizadores Internos & Perfis RBAC
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
+            Controlo de acessos à plataforma, mapeamento de identidades externas (Google OIDC) e atribuição de funções operacionais.
+          </p>
+        </div>
+
+        <button
+          onClick={handleCreateUser}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e95c0c] hover:bg-[#d04f08] text-white rounded-lg text-sm font-bold shadow-xs transition cursor-pointer"
+        >
+          <UserPlus className="w-4 h-4" />
+          <span>Criar Utilizador Interno</span>
+        </button>
       </div>
 
       {/* Users Table */}
@@ -51,18 +171,19 @@ export default function PlatformUsersPage() {
                 <th className="py-3 px-4 text-center">Identidades Conectadas</th>
                 <th className="py-3 px-4 text-center">Estado</th>
                 <th className="py-3 px-4">Data de Criação</th>
+                <th className="py-3 px-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     A carregar utilizadores da plataforma...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     Nenhum utilizador interno registado.
                   </td>
                 </tr>
@@ -106,6 +227,16 @@ export default function PlatformUsersPage() {
                     </td>
                     <td className="py-3 px-4 text-slate-500 text-[11px]">
                       {new Date(u.createdAt).toLocaleString("pt-PT")}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleEditRole(u)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold transition cursor-pointer"
+                        title="Alterar Função RBAC"
+                      >
+                        <Edit3 className="w-3 h-3 text-[#e95c0c]" />
+                        <span>Editar</span>
+                      </button>
                     </td>
                   </tr>
                 ))

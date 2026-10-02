@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Settings, CheckCircle2, AlertCircle, RefreshCw, Key, ShieldCheck, Database, Cloud } from "lucide-react";
+import { toast, dialog, showLoading, hideLoading } from "@/lib/swal";
 
 export default function IntegrationsPage() {
   const [data, setData] = useState<any | null>(null);
@@ -31,6 +32,8 @@ export default function IntegrationsPage() {
   const handleTestConnection = async (provider: "GOOGLE" | "MICROSOFT") => {
     setTestingProvider(provider);
     setTestResult(null);
+    const providerLabel = provider === "GOOGLE" ? "Google Workspace & Vault" : "Microsoft Graph";
+    showLoading(`A Testar Ligação ${providerLabel}...`, "A autenticar com as credenciais oficiais da cloud...");
     try {
       const res = await fetch("/api/admin/integrations", {
         method: "POST",
@@ -38,17 +41,26 @@ export default function IntegrationsPage() {
         body: JSON.stringify({ provider }),
       });
       const resData = await res.json();
+      hideLoading();
       setTestResult({
         provider,
         message: resData.message,
         success: resData.success,
       });
+
+      if (resData.success) {
+        dialog.success(`Ligação ${providerLabel} Verificada!`, resData.message);
+      } else {
+        dialog.error(`Falha na Ligação ${providerLabel}`, resData.message || "Não foi possível validar as credenciais.");
+      }
     } catch (err: any) {
+      hideLoading();
       setTestResult({
         provider,
         message: `Falha: ${err.message}`,
         success: false,
       });
+      dialog.error(`Erro de Comunicação`, err.message || "Erro inesperado ao testar conectividade.");
     } finally {
       setTestingProvider(null);
     }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Cloud, Search, RefreshCw, Mail, Users, CheckCircle2, ArrowRightLeft } from "lucide-react";
 import Link from "next/link";
+import { toast, dialog, showLoading, hideLoading } from "@/lib/swal";
 
 export default function MicrosoftMailboxesPage() {
   const [mailboxes, setMailboxes] = useState<any[]>([]);
@@ -39,17 +40,20 @@ export default function MicrosoftMailboxesPage() {
 
   const handleSync = async () => {
     setSyncing(true);
+    showLoading("A Sincronizar Mailboxes M365...", "A listar User Mailboxes e Shared Mailboxes via Graph API...");
     try {
       const res = await fetch("/api/microsoft/mailboxes", { method: "POST" });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        alert(`Sincronização de caixas Microsoft concluída! Total: ${data.totalSynced}`);
+        toast.success("Sincronização Concluída!", `Total de caixas sincronizadas: ${data.totalSynced}`);
         fetchMailboxes();
       } else {
-        alert(`Erro: ${data.error}`);
+        dialog.error("Erro na Sincronização", data.error || "Não foi possível sincronizar as caixas.");
       }
     } catch (err: any) {
-      alert(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha de Comunicação", err.message || "Erro inesperado.");
     } finally {
       setSyncing(false);
     }

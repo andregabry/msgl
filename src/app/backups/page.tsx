@@ -15,6 +15,7 @@ import {
   X,
   HardDrive,
 } from "lucide-react";
+import { toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
 export default function BackupsPage() {
   const [backups, setBackups] = useState<any[]>([]);
@@ -66,6 +67,7 @@ export default function BackupsPage() {
     e.preventDefault();
     setImportLoading(true);
     setImportMessage(null);
+    showLoading("A Validar & Importar Ficheiro Local...", "A calcular hash SHA-256 e a mover para o diretório seguro...");
     try {
       const res = await fetch("/api/backups/import-local", {
         method: "POST",
@@ -79,15 +81,20 @@ export default function BackupsPage() {
         }),
       });
       const data = await res.json();
+      hideLoading();
       if (res.ok) {
-        setImportMessage("Backup importado com sucesso! Integridade SHA-256 calculada.");
+        setIsImportModalOpen(false);
+        dialog.success(
+          "Backup Importado com Sucesso!",
+          `O ficheiro foi catalogado com sucesso com hash SHA-256 verificado. O backup já se encontra disponível no repositório.`
+        );
         fetchBackups();
-        setTimeout(() => setIsImportModalOpen(false), 1500);
       } else {
-        setImportMessage(`Erro: ${data.error}`);
+        dialog.error("Erro na Importação", data.error || "Não foi possível validar o ficheiro.");
       }
     } catch (err: any) {
-      setImportMessage(`Falha: ${err.message}`);
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
     } finally {
       setImportLoading(false);
     }
