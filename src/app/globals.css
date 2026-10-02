@@ -4,6 +4,12 @@
 
 @import "sweetalert2/dist/sweetalert2.min.css";
 
+/* Base Root Font Size: +2px system-wide (16px -> 18px base) */
+html {
+  font-size: 18px !important;
+  scroll-behavior: smooth;
+}
+
 :root {
   --color-navy: #223546;
   --color-orange: #e95c0c;
@@ -11,9 +17,11 @@
 }
 
 body {
+  font-size: 1rem;
   color: #1e293b;
   background: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom scrollbars */
@@ -32,17 +40,21 @@ body {
   background: #94a3b8;
 }
 
-/* Dual Dark Sidebar (Straight Left Orange Border with Zero Radius) */
+/* =================================================================== */
+/* DUAL DARK SIDEBAR (Zero Radius on Left Orange Border)                */
+/* Typography: +3px larger font for labels, titles and navigation links */
+/* Widths: 72px primary, 215px secondary to accommodate typography     */
+/* =================================================================== */
 .sidebar-primary {
   background-color: #121921 !important;
-  width: 68px !important;
-  flex: 0 0 68px !important;
+  width: 72px !important;
+  flex: 0 0 72px !important;
 }
 
 .sidebar-secondary {
   background-color: #1c2836 !important;
-  width: 190px !important;
-  flex: 0 0 190px !important;
+  width: 215px !important;
+  flex: 0 0 215px !important;
 }
 
 /* Primary Tab Button (Active - Zero Radius on orange left border) */
@@ -53,8 +65,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
   background-color: #1c2836 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
@@ -79,8 +91,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
   background-color: transparent !important;
   color: #64748b !important;
   font-weight: 500;
@@ -97,16 +109,29 @@ body {
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Submenu active item */
+/* Primary sidebar tab label: +3px (from 11px to 14px) */
+.primary-tab-btn-active span,
+.primary-tab-btn-inactive span {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
+/* Submenu section header title: +3px (from 12px to 15px) */
+.sidebar-secondary h2 {
+  font-size: 15px !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Submenu navigation links: +3px (from 13px to 16px) */
 .submenu-nav-link-active {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.65rem 0.9rem;
+  padding: 0.75rem 0.95rem !important;
   color: #ffffff !important;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 16px !important;
   background-color: #15202c !important;
   border-left: 4px solid #e95c0c !important;
   border-top-left-radius: 0 !important;
@@ -123,10 +148,10 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 0.65rem 0.9rem;
+  padding: 0.75rem 0.95rem !important;
   color: #8fa0b5 !important;
   font-weight: 500;
-  font-size: 0.82rem;
+  font-size: 16px !important;
   border-left: 4px solid transparent;
   border-top-left-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
@@ -144,40 +169,21 @@ body {
   border-left: 4px solid rgba(233, 92, 12, 0.4) !important;
 }
 
-/* SweetAlert2 Platform Theme Customization */
+/* =================================================================== */
+/* SWEETALERT2 NOTIFICATIONS & DIALOGS THEME & BACKDROP REMOVAL        */
+/* Complete removal of dark transparent background overlay             */
+/* =================================================================== */
 .swal2-container {
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
-  background-color: rgba(15, 23, 42, 0.72) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   z-index: 99999 !important;
 }
 
-.swal2-popup.swal2-toast {
-  background: #1c2836 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  color: #ffffff !important;
-  border-radius: 0.75rem !important;
-}
-
-.swal2-popup.swal2-modal {
-  background: #1c2836 !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
-  color: #ffffff !important;
-}
-
-.swal2-title {
-  color: #ffffff !important;
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;
-}
-
-.swal2-html-container {
-  color: #cbd5e1 !important;
-  font-size: 0.875rem !important;
-  line-height: 1.5 !important;
+.swal2-backdrop-show {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .swal2-timer-progress-bar {
@@ -189,3 +195,180 @@ body {
   margin-top: 1.5rem !important;
 }
 
+/* Light Mode SweetAlert2 */
+html:not(.dark) .swal2-popup.swal2-toast {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  color: #1e293b !important;
+  border-radius: 0.85rem !important;
+}
+
+html:not(.dark) .swal2-popup.swal2-modal {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.18) !important;
+  color: #1e293b !important;
+}
+
+html:not(.dark) .swal2-title {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+}
+
+html:not(.dark) .swal2-html-container {
+  color: #475569 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+}
+
+html:not(.dark) .swal2-close {
+  color: #64748b !important;
+}
+
+html:not(.dark) .swal2-modal input,
+html:not(.dark) .swal2-modal select {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+/* Dark Mode SweetAlert2 */
+html.dark .swal2-popup.swal2-toast {
+  background: #1c2836 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  color: #ffffff !important;
+  border-radius: 0.85rem !important;
+}
+
+html.dark .swal2-popup.swal2-modal {
+  background: #1c2836 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  color: #ffffff !important;
+}
+
+html.dark .swal2-title {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+}
+
+html.dark .swal2-html-container {
+  color: #cbd5e1 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+}
+
+html.dark .swal2-close {
+  color: #94a3b8 !important;
+}
+
+/* =================================================================== */
+/* SYSTEM-WIDE DARK MODE THEME RULES                                   */
+/* =================================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0d131a !important;
+  color: #f1f5f9 !important;
+}
+
+/* Cards & Surfaces */
+html.dark .bg-white {
+  background-color: #16202c !important;
+  border-color: #263648 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Backgrounds */
+html.dark .bg-slate-50 {
+  background-color: #121921 !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: #0d131a !important;
+}
+
+html.dark .bg-slate-200 {
+  background-color: #223244 !important;
+}
+
+/* Borders */
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300 {
+  border-color: #263648 !important;
+}
+
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #263648 !important;
+}
+
+/* Text Colors */
+html.dark .text-[#223546] {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Table styling */
+html.dark table thead tr {
+  background-color: #121921 !important;
+  border-color: #263648 !important;
+}
+
+html.dark table thead th {
+  color: #94a3b8 !important;
+}
+
+html.dark table tbody tr {
+  border-color: #202d3d !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Form inputs & selects */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #101720 !important;
+  border-color: #2b3d52 !important;
+  color: #ffffff !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Dark mode scrollbars */
+html.dark ::-webkit-scrollbar-track {
+  background: #121921 !important;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2b3d52 !important;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3b5370 !important;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -16,6 +16,8 @@ import {
   Layers,
   User,
   RefreshCw,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 interface SubItem {
@@ -103,6 +105,27 @@ const MODULES: PrimaryModule[] = [
 
 export default function AppSidebarLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  // Sync initial theme from document on mount
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    try {
+      localStorage.setItem("migrate_hub_theme", nextTheme);
+    } catch (e) {}
+    window.dispatchEvent(new Event("themechange"));
+  };
 
   // Find active module by matching current route
   const activeModule =
@@ -114,13 +137,13 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
   const currentModule = MODULES.find((m) => m.id === selectedModuleId) || MODULES[0];
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-100">
+    <div className="flex min-h-screen w-full bg-slate-100 dark:bg-[#0d131a] transition-colors duration-200">
       {/* ------------------------------------------------------------------- */}
       {/* DUAL DARK SIDEBAR                                                   */}
       {/* ------------------------------------------------------------------- */}
       <aside className="fixed inset-y-0 left-0 z-40 flex shadow-2xl select-none">
-        {/* 1. Left Primary Icon Column (68px) */}
-        <div className="w-[68px] sidebar-primary border-r border-[#192533] flex flex-col justify-between items-center py-4 relative z-20">
+        {/* 1. Left Primary Icon Column (72px) */}
+        <div className="w-[72px] sidebar-primary border-r border-[#192533] flex flex-col justify-between items-center py-4 relative z-20">
           <div className="flex flex-col items-center gap-5 w-full">
             {/* Top Brand Icon */}
             <div className="w-10 h-10 flex items-center justify-center text-[#e95c0c]">
@@ -140,7 +163,7 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
                     title={m.label}
                   >
                     <Icon className="w-5 h-5 mb-1" />
-                    <span className="text-[11px] tracking-tight font-medium">{m.label}</span>
+                    <span className="text-[14px] tracking-tight font-medium">{m.label}</span>
                   </button>
                 );
               })}
@@ -158,12 +181,12 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
           </div>
         </div>
 
-        {/* 2. Secondary Submenu Column (190px) */}
-        <div className="w-[190px] sidebar-secondary border-r border-[#15202c] flex flex-col justify-between py-4 select-none relative z-10">
+        {/* 2. Secondary Submenu Column (215px) */}
+        <div className="w-[215px] sidebar-secondary border-r border-[#15202c] flex flex-col justify-between py-4 select-none relative z-10">
           <div className="space-y-3">
             {/* Section Title */}
             <div className="px-4 pt-1 pb-1">
-              <h2 className="text-xs font-black text-white uppercase tracking-wider">
+              <h2 className="text-[15px] font-black text-white uppercase tracking-wider">
                 {currentModule.subTitle}
               </h2>
             </div>
@@ -191,25 +214,45 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
       {/* ------------------------------------------------------------------- */}
       {/* MAIN CONTENT AREA                                                   */}
       {/* ------------------------------------------------------------------- */}
-      <div className="flex-1 md:pl-[258px] flex flex-col min-h-screen">
+      <div className="flex-1 md:pl-[287px] flex flex-col min-h-screen">
         {/* Top Navbar */}
-        <header className="border-t-4 border-[#e95c0c] border-b border-slate-200 bg-white sticky top-0 z-30 px-6 lg:px-10 py-3 flex items-center justify-between gap-4 shadow-xs">
+        <header className="border-t-4 border-[#e95c0c] border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] sticky top-0 z-30 px-6 lg:px-10 py-3 flex items-center justify-between gap-4 shadow-xs transition-colors duration-200">
           <div className="flex items-center gap-3">
-            <span className="font-extrabold text-base tracking-tight text-[#223546]">
+            <span className="font-extrabold text-base tracking-tight text-[#223546] dark:text-white">
               ENGING <span className="text-[#e95c0c] font-black">×</span> DYNAMOX
             </span>
-            <span className="hidden sm:inline text-xs text-slate-400 font-semibold pl-2 border-l border-slate-200">
+            <span className="hidden sm:inline text-xs text-slate-400 dark:text-slate-500 font-semibold pl-2 border-l border-slate-200 dark:border-slate-700">
               Workspace Backup & M365 Migration Hub
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-50 text-emerald-700 text-xs font-bold">
+            {/* Dark / Light Mode Switcher */}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition shadow-xs cursor-pointer"
+              title={theme === "dark" ? "Alternar para Modo Claro" : "Alternar para Modo Escuro"}
+              aria-label="Alternar tema"
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                  <span className="hidden sm:inline font-semibold">Modo Claro</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-slate-600 fill-slate-400/20" />
+                  <span className="hidden sm:inline font-semibold">Modo Escuro</span>
+                </>
+              )}
+            </button>
+
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>SISTEMA ATIVO</span>
             </div>
 
-            <div className="text-xs text-slate-500 font-medium hidden md:block">
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden md:block">
               andre.gabry@dynamox.net
             </div>
           </div>
