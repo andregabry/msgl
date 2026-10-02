@@ -229,7 +229,7 @@ model IdentityLink {
 model BackupRequest {
   id             String           @id @default(uuid()) @db.Uuid
   entityType     String           @map("entity_type") // GOOGLE_USER, GOOGLE_GROUP
-  entityId       String?          @map("entity_id") @db.Uuid
+  entityId       String?          @map("entity_id")
   entityEmail    String           @map("entity_email")
   serviceType    String           @map("service_type") // GMAIL, GOOGLE_CHAT, GOOGLE_GROUPS
   format         String           @default("MBOX") // MBOX, PST, ZIP
@@ -244,8 +244,11 @@ model BackupRequest {
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
 
-  googleUser     GoogleUser?      @relation(fields: [entityId], references: [id], onDelete: SetNull, map: "fk_backup_user")
-  googleGroup    GoogleGroup?     @relation(fields: [entityId], references: [id], onDelete: SetNull, map: "fk_backup_group")
+  googleUserId   String?          @map("google_user_id") @db.Uuid
+  googleGroupId  String?          @map("google_group_id") @db.Uuid
+
+  googleUser     GoogleUser?      @relation(fields: [googleUserId], references: [id], onDelete: SetNull)
+  googleGroup    GoogleGroup?     @relation(fields: [googleGroupId], references: [id], onDelete: SetNull)
   exports        BackupExport[]
   artifacts      BackupArtifact[]
   events         BackupEvent[]
@@ -255,6 +258,8 @@ model BackupRequest {
   @@index([entityEmail])
   @@index([serviceType])
   @@index([status])
+  @@index([googleUserId])
+  @@index([googleGroupId])
   @@map("backup_requests")
 }
 

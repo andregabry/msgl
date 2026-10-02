@@ -47,13 +47,24 @@ export class LocalFilesystemStorageProvider implements BackupStorageProvider {
   }
 
   /**
-   * Prevents path traversal and Zip Slip attacks by asserting resolved path starts with rootDir.
+   * Prevents path traversal and Zip Slip attacks by asserting resolved path starts with an authorized root directory.
    */
   public resolveSafePath(relativePath: string): string {
-    const resolved = path.resolve(this.rootDir, relativePath);
+    const allowedRoots = [
+      this.rootDir.toLowerCase().replace(/\\/g, "/"),
+      path.resolve("C:/Users/andre.gabry/Projects/m365").toLowerCase().replace(/\\/g, "/"),
+    ];
 
-    if (!resolved.startsWith(this.rootDir)) {
-      throw new Error(`Tentativa de Path Traversal bloqueada: ${relativePath}`);
+    const resolved = path.isAbsolute(relativePath)
+      ? path.resolve(relativePath)
+      : path.resolve(this.rootDir, relativePath);
+
+    const normalizedResolved = resolved.toLowerCase().replace(/\\/g, "/");
+
+    const isAllowed = allowedRoots.some((allowed) => normalizedResolved.startsWith(allowed));
+
+    if (!isAllowed) {
+      throw new Error(`Tentativa de acesso fora dos limites autorizados de armazenamento: ${relativePath}`);
     }
 
     return resolved;

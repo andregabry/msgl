@@ -13,6 +13,7 @@ import {
   AlertCircle,
   X,
   FileSpreadsheet,
+  FolderArchive,
 } from "lucide-react";
 import { toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
@@ -23,6 +24,7 @@ export default function GoogleGroupsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncingLocal, setSyncingLocal] = useState(false);
 
   // Group Details Modal State
   const [selectedGroup, setSelectedGroup] = useState<any | null>(null);
@@ -73,6 +75,30 @@ export default function GoogleGroupsPage() {
       dialog.error("Falha de Comunicação", err.message || "Erro inesperado.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSyncLocalBackups = async () => {
+    setSyncingLocal(true);
+    showLoading("A Varrer Ficheiros no Disco...", "A detetar ficheiros PST e Takeout ZIP no armazenamento...");
+    try {
+      const res = await fetch("/api/backups/sync-local", { method: "POST" });
+      const data = await res.json();
+      hideLoading();
+      if (res.ok) {
+        toast.success(
+          "Varredura Concluída!",
+          `${data.discoveredCount} ficheiros detetados. ${data.registeredCount} novos registados, ${data.updatedCount} atualizados.`
+        );
+        fetchGroups();
+      } else {
+        dialog.error("Erro na Sincronização", data.error || "Não foi possível varrer os backups locais.");
+      }
+    } catch (err: any) {
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
+    } finally {
+      setSyncingLocal(false);
     }
   };
 
@@ -229,14 +255,25 @@ export default function GoogleGroupsPage() {
           </p>
         </div>
 
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e95c0c] hover:bg-[#d04f08] text-white rounded-lg text-sm font-bold shadow-xs transition cursor-pointer"
-        >
-          <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-          <span>{syncing ? "A Sincronizar Grupos..." : "Sincronizar Grupos"}</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSyncLocalBackups}
+            disabled={syncingLocal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-bold shadow-xs transition cursor-pointer"
+            title="Varrer ficheiros PST e Takeout no disco para associar aos grupos"
+          >
+            <FolderArchive className={`w-4 h-4 text-[#e95c0c] ${syncingLocal ? "animate-spin" : ""}`} />
+            <span>{syncingLocal ? "A Varrer Disco..." : "Sincronizar Backups do Disco"}</span>
+          </button>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e95c0c] hover:bg-[#d04f08] text-white rounded-lg text-sm font-bold shadow-xs transition cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+            <span>{syncing ? "A Sincronizar Grupos..." : "Sincronizar Grupos"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Toolbar */}

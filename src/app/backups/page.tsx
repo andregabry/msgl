@@ -14,6 +14,7 @@ import {
   FolderInput,
   X,
   HardDrive,
+  FolderArchive,
 } from "lucide-react";
 import { toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
@@ -26,6 +27,7 @@ export default function BackupsPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncingLocal, setSyncingLocal] = useState(false);
 
   // Import Modal
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -100,6 +102,30 @@ export default function BackupsPage() {
     }
   };
 
+  const handleSyncLocalBackups = async () => {
+    setSyncingLocal(true);
+    showLoading("A Varrer Disco Local...", "A detetar ficheiros PST, MBOX e Takeout ZIP no armazenamento...");
+    try {
+      const res = await fetch("/api/backups/sync-local", { method: "POST" });
+      const data = await res.json();
+      hideLoading();
+      if (res.ok) {
+        toast.success(
+          "Varredura Concluída!",
+          `${data.discoveredCount} ficheiros detetados. ${data.registeredCount} novos registados, ${data.updatedCount} atualizados.`
+        );
+        fetchBackups();
+      } else {
+        dialog.error("Erro na Sincronização", data.error || "Não foi possível varrer os backups locais.");
+      }
+    } catch (err: any) {
+      hideLoading();
+      dialog.error("Falha", err.message || "Erro inesperado.");
+    } finally {
+      setSyncingLocal(false);
+    }
+  };
+
   const formatBytes = (bytesStr?: string) => {
     const b = parseInt(bytesStr || "0", 10);
     if (b === 0) return "0 MB";
@@ -124,6 +150,14 @@ export default function BackupsPage() {
         </div>
 
         <div className="flex gap-2">
+          <button
+            onClick={handleSyncLocalBackups}
+            disabled={syncingLocal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e95c0c] hover:bg-[#d04f08] text-white rounded-lg text-sm font-bold shadow-xs transition cursor-pointer"
+          >
+            <FolderArchive className={`w-4 h-4 ${syncingLocal ? "animate-spin" : ""}`} />
+            <span>{syncingLocal ? "A Varrer..." : "Sincronizar Backups do Disco"}</span>
+          </button>
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-bold shadow-xs transition cursor-pointer"
