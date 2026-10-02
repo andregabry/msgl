@@ -1,4 +1,5 @@
 import Swal, { SweetAlertOptions, SweetAlertResult } from "sweetalert2";
+import { humanizeError, buildErrorHtml, FormattedError } from "./errors/humanize";
 
 /**
  * Checks whether the application is currently running in Dark Mode.
@@ -127,15 +128,16 @@ export const toast = {
     });
   },
 
-  error: (title: string, message?: string) => {
+  error: (title: string, message?: unknown) => {
+    const formatted = humanizeError(message || title, title);
     return AppSwal.fire({
       toast: true,
       position: "top-end",
       icon: "error",
       title: title,
-      text: message,
+      text: formatted.description.length > 130 ? formatted.description.substring(0, 127) + "..." : formatted.description,
       showConfirmButton: false,
-      timer: 4500,
+      timer: 5000,
       timerProgressBar: true,
       backdrop: false,
     });
@@ -185,11 +187,36 @@ export const dialog = {
     });
   },
 
-  error: (title: string, text?: string, options?: SweetAlertOptions) => {
+  error: (title: string, textOrError?: unknown, options?: SweetAlertOptions) => {
+    let formatted: FormattedError;
+    let finalTitle = title;
+
+    if (textOrError && typeof textOrError === "object" && ("resolutionHint" in (textOrError as any) || "hint" in (textOrError as any))) {
+      const obj = textOrError as any;
+      formatted = {
+        title: title,
+        description: obj.message || obj.description || "Ocorreu um erro na operação.",
+        resolutionHint: obj.resolutionHint || obj.hint,
+        technicalDetails: obj.technicalDetails || obj.rawError,
+      };
+    } else {
+      formatted = humanizeError(textOrError || title, title);
+    }
+
+    if (
+      formatted.title &&
+      formatted.title !== "Ocorreu um Erro" &&
+      (title === "Ocorreu um Erro" || title.startsWith("Falha na Ligação") || title.startsWith("Erro na Ligação"))
+    ) {
+      finalTitle = formatted.title;
+    }
+
+    const htmlContent = buildErrorHtml(formatted);
+
     return AppSwal.fire({
       icon: "error",
-      title,
-      text,
+      title: finalTitle,
+      html: htmlContent,
       confirmButtonText: "Fechar",
       backdrop: "transparent",
       ...options,

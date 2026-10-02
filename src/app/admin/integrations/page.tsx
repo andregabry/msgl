@@ -20,7 +20,6 @@ export default function IntegrationsPage() {
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<{ provider: string; message: string; success: boolean } | null>(null);
 
   // Google Configuration Modal State
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
@@ -100,7 +99,6 @@ export default function IntegrationsPage() {
     }
 
     setTestingProvider(provider);
-    setTestResult(null);
     showLoading(`A Testar Ligação ${providerLabel}...`, "A autenticar com as credenciais oficiais da cloud...");
 
     try {
@@ -112,25 +110,19 @@ export default function IntegrationsPage() {
       const resData = await res.json();
       hideLoading();
 
-      setTestResult({
-        provider,
-        message: resData.message,
-        success: resData.success,
-      });
-
       if (resData.success) {
         dialog.success(`Ligação ${providerLabel} Verificada!`, resData.message);
-        fetchIntegrations();
       } else {
-        dialog.error(`Falha na Ligação ${providerLabel}`, resData.message || "Não foi possível validar as credenciais.");
+        dialog.error(
+          resData.title || `Falha na Ligação ${providerLabel}`,
+          resData.hint
+            ? { message: resData.message, resolutionHint: resData.hint, technicalDetails: resData.rawError }
+            : resData.message || "Não foi possível validar as credenciais."
+        );
       }
+      fetchIntegrations();
     } catch (err: any) {
       hideLoading();
-      setTestResult({
-        provider,
-        message: `Falha: ${err.message}`,
-        success: false,
-      });
       dialog.error(`Erro de Comunicação`, err.message || "Erro inesperado ao testar conectividade.");
     } finally {
       setTestingProvider(null);
@@ -225,19 +217,6 @@ export default function IntegrationsPage() {
           Configuração de APIs oficiais para Google Workspace (Admin Directory & Vault) e Microsoft 365 (Graph & Purview).
         </p>
       </div>
-
-      {testResult && (
-        <div
-          className={`p-4 rounded-xl border text-xs font-bold flex items-center gap-2.5 ${
-            testResult.success
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-              : "bg-rose-50 border-rose-200 text-rose-800"
-          }`}
-        >
-          {testResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <AlertCircle className="w-5 h-5 text-rose-500" />}
-          <span>{testResult.message}</span>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ================================================================= */}

@@ -5,6 +5,7 @@ import { graphClient } from "@/lib/microsoft/graph.client";
 import { googleVaultService } from "@/lib/google/vault.service";
 import { logAudit } from "@/lib/audit/audit.service";
 import { prisma } from "@/lib/prisma";
+import { humanizeError } from "@/lib/errors/humanize";
 import fs from "fs";
 import path from "path";
 
@@ -139,9 +140,14 @@ export async function POST(req: NextRequest) {
           create: { provider: "GOOGLE_WORKSPACE", status: "ERROR", lastTestedAt: new Date(), error: googleErr.message },
         });
 
+        const formatted = humanizeError(googleErr, "Erro na autenticação com a Google");
+
         return NextResponse.json({
           success: false,
-          message: `Erro na autenticação com a Google: ${googleErr.message}. Verifique a Service Account e a Delegação em Todo o Domínio (Domain-Wide Delegation).`,
+          title: formatted.title,
+          message: formatted.description,
+          hint: formatted.resolutionHint,
+          rawError: googleErr.message,
         });
       }
     }
@@ -182,9 +188,14 @@ export async function POST(req: NextRequest) {
           create: { provider: "MICROSOFT_365", status: "ERROR", lastTestedAt: new Date(), error: msErr.message },
         });
 
+        const formatted = humanizeError(msErr, "Erro na ligação Microsoft Graph");
+
         return NextResponse.json({
           success: false,
-          message: `Erro na ligação Microsoft Graph: ${msErr.message}. Verifique o Tenant ID, Client ID, Client Secret e se o consentimento de administrador foi concedido no Entra ID.`,
+          title: formatted.title,
+          message: formatted.description,
+          hint: formatted.resolutionHint,
+          rawError: msErr.message,
         });
       }
     }
