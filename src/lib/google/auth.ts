@@ -5,8 +5,13 @@ export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/admin.directory.user.readonly",
   "https://www.googleapis.com/auth/admin.directory.group.readonly",
   "https://www.googleapis.com/auth/admin.directory.group.member.readonly",
-  "https://www.googleapis.com/auth/ediscovery",
+  "https://www.googleapis.com/auth/apps.groups.settings",
   "https://www.googleapis.com/auth/ediscovery.readonly",
+  "https://mail.google.com/",
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/contacts",
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/drive.readonly",
 ];
 
 export function getGoogleAuthClient() {

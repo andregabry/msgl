@@ -5,6 +5,11 @@ import Swal, { SweetAlertOptions, SweetAlertResult } from "sweetalert2";
  */
 export function isDarkMode(): boolean {
   if (typeof document === "undefined") return false;
+  try {
+    const saved = localStorage.getItem("migrate_hub_theme");
+    if (saved === "dark") return true;
+    if (saved === "light") return false;
+  } catch (e) {}
   return document.documentElement.classList.contains("dark");
 }
 

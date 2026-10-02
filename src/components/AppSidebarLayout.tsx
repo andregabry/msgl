@@ -113,16 +113,15 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
     setTheme(isDark ? "dark" : "light");
   }, []);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    if (nextTheme === "dark") {
+  const setThemeMode = (mode: "light" | "dark") => {
+    setTheme(mode);
+    if (mode === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
     try {
-      localStorage.setItem("migrate_hub_theme", nextTheme);
+      localStorage.setItem("migrate_hub_theme", mode);
     } catch (e) {}
     window.dispatchEvent(new Event("themechange"));
   };
@@ -215,8 +214,8 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
       {/* MAIN CONTENT AREA                                                   */}
       {/* ------------------------------------------------------------------- */}
       <div className="flex-1 md:pl-[287px] flex flex-col min-h-screen">
-        {/* Top Navbar */}
-        <header className="border-t-4 border-[#e95c0c] border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] sticky top-0 z-30 px-6 lg:px-10 py-3 flex items-center justify-between gap-4 shadow-xs transition-colors duration-200">
+        {/* Top Navbar with 4px Solid #e95c0c Orange Border */}
+        <header className="top-navbar border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] sticky top-0 z-30 px-6 lg:px-10 py-3 flex items-center justify-between gap-4 shadow-xs transition-colors duration-200">
           <div className="flex items-center gap-3">
             <span className="font-extrabold text-base tracking-tight text-[#223546] dark:text-white">
               ENGING <span className="text-[#e95c0c] font-black">×</span> DYNAMOX
@@ -227,25 +226,35 @@ export default function AppSidebarLayout({ children }: { children: React.ReactNo
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Dark / Light Mode Switcher */}
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition shadow-xs cursor-pointer"
-              title={theme === "dark" ? "Alternar para Modo Claro" : "Alternar para Modo Escuro"}
-              aria-label="Alternar tema"
-            >
-              {theme === "dark" ? (
-                <>
-                  <Sun className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-                  <span className="hidden sm:inline font-semibold">Modo Claro</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4 text-slate-600 fill-slate-400/20" />
-                  <span className="hidden sm:inline font-semibold">Modo Escuro</span>
-                </>
-              )}
-            </button>
+            {/* Dark / Light Mode Segmented Control */}
+            <div className="flex items-center p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setThemeMode("light")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                  theme === "light"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                }`}
+                title="Ativar Modo Claro"
+              >
+                <Sun className={`w-3.5 h-3.5 ${theme === "light" ? "text-amber-500 fill-amber-500/20" : ""}`} />
+                <span>Claro</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemeMode("dark")}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                  theme === "dark"
+                    ? "bg-[#1c2836] text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                }`}
+                title="Ativar Modo Escuro"
+              >
+                <Moon className={`w-3.5 h-3.5 ${theme === "dark" ? "text-sky-400 fill-sky-400/20" : ""}`} />
+                <span>Escuro</span>
+              </button>
+            </div>
 
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

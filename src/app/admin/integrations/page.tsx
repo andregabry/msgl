@@ -409,21 +409,21 @@ export default function IntegrationsPage() {
       {/* MODAL: CONFIGURAÇÃO GOOGLE WORKSPACE                                */}
       {/* =================================================================== */}
       {isGoogleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-[#1c2836] border border-slate-700/80 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-5 text-white animate-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b border-slate-700/80 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 dark:bg-black/60 backdrop-blur-xs p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-5 text-slate-800 dark:text-white animate-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700/80 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-[#e95c0c] flex items-center justify-center font-bold">
                   G
                 </div>
                 <div>
-                  <h3 className="text-base font-black">Configuração Google Workspace & Vault</h3>
-                  <p className="text-xs text-slate-400">Credenciais oficiais da Google Cloud e delegação de domínio</p>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">Configuração Google Workspace & Vault</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Credenciais oficiais da Google Cloud e delegação de domínio</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsGoogleModalOpen(false)}
-                className="w-8 h-8 rounded-lg hover:bg-slate-700/60 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition"
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -431,98 +431,98 @@ export default function IntegrationsPage() {
 
             <form onSubmit={handleSaveGoogle} className="space-y-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">Caminho da Service Account JSON (Chave Privada):</label>
+                <label className="font-bold text-slate-700 dark:text-slate-200">Caminho da Service Account JSON (Chave Privada):</label>
                 <input
                   type="text"
                   required
                   placeholder="C:/Users/.../service-account.json"
                   value={googleKeyPath}
                   onChange={(e) => setGoogleKeyPath(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c]"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c] focus:bg-white dark:focus:bg-[#121921]"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Caminho absoluto para o ficheiro JSON da Service Account gerada na Google Cloud Console com Domain-Wide Delegation.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">E-mail de Super Administrador (Impersonação):</label>
+                <label className="font-bold text-slate-700 dark:text-slate-200">E-mail de Super Administrador (Impersonação):</label>
                 <input
                   type="email"
                   required
                   placeholder="admin@dominio.pt"
                   value={googleAdmin}
                   onChange={(e) => setGoogleAdmin(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c]"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c] focus:bg-white dark:focus:bg-[#121921]"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Conta com privilégios de Super Admin no Google Workspace para aceder a Directory API e Vault.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-200">Google Cloud Project ID:</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-200">Google Cloud Project ID:</label>
                   <input
                     type="text"
                     required
-                    placeholder="enging-migration"
+                    placeholder="migram365-489017"
                     value={googleProjectId}
                     onChange={(e) => setGoogleProjectId(e.target.value)}
-                    className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c]"
+                    className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c] focus:bg-white dark:focus:bg-[#121921]"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-200">Customer ID:</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-200">Customer ID:</label>
                   <input
                     type="text"
                     required
                     placeholder="my_customer"
                     value={googleCustomerId}
                     onChange={(e) => setGoogleCustomerId(e.target.value)}
-                    className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c]"
+                    className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c] focus:bg-white dark:focus:bg-[#121921]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-200">Domínio Autorizado:</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-200">Domínio Autorizado:</label>
                   <input
                     type="text"
                     required
                     placeholder="enging.pt"
                     value={googleDomain}
                     onChange={(e) => setGoogleDomain(e.target.value)}
-                    className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c]"
+                    className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c] focus:bg-white dark:focus:bg-[#121921]"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="font-bold text-slate-200">Matter ID Dedicado (Opcional):</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-200">Matter ID Dedicado (Opcional):</label>
                   <input
                     type="text"
                     placeholder="Deixe vazio para automático"
                     value={googleMatterId}
                     onChange={(e) => setGoogleMatterId(e.target.value)}
-                    className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c]"
+                    className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-[#e95c0c] focus:bg-white dark:focus:bg-[#121921]"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-700/80">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/80">
                 <button
                   type="button"
                   onClick={() => setIsGoogleModalOpen(false)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-bold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-bold cursor-pointer border border-slate-200 dark:border-slate-600 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={savingGoogle}
-                  className="px-4 py-2 bg-[#e95c0c] hover:bg-[#c84c06] text-white rounded-lg font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                  className="px-4 py-2 bg-[#e95c0c] hover:bg-[#c84c06] text-white rounded-lg font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{savingGoogle ? "A Guardar..." : "Guardar Parâmetros Google"}</span>
@@ -537,21 +537,21 @@ export default function IntegrationsPage() {
       {/* MODAL: CONFIGURAÇÃO MICROSOFT 365                                  */}
       {/* =================================================================== */}
       {isMicrosoftModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-[#1c2836] border border-slate-700/80 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-5 text-white animate-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b border-slate-700/80 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 dark:bg-black/60 backdrop-blur-xs p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-5 text-slate-800 dark:text-white animate-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700/80 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-500 flex items-center justify-center font-bold">
                   M
                 </div>
                 <div>
-                  <h3 className="text-base font-black">Configuração Microsoft 365 & Purview</h3>
-                  <p className="text-xs text-slate-400">Credenciais Entra ID App Registration e SAS URL do Purview</p>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">Configuração Microsoft 365 & Purview</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Credenciais Entra ID App Registration e SAS URL do Purview</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsMicrosoftModalOpen(false)}
-                className="w-8 h-8 rounded-lg hover:bg-slate-700/60 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition"
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -559,40 +559,40 @@ export default function IntegrationsPage() {
 
             <form onSubmit={handleSaveMicrosoft} className="space-y-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">Directory (Tenant) ID:</label>
+                <label className="font-bold text-slate-700 dark:text-slate-200">Directory (Tenant) ID:</label>
                 <input
                   type="text"
                   required
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                   value={msTenantId}
                   onChange={(e) => setMsTenantId(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-sky-500 focus:bg-white dark:focus:bg-[#121921]"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   ID do locatário Azure Entra ID / Microsoft 365.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">Application (Client) ID:</label>
+                <label className="font-bold text-slate-700 dark:text-slate-200">Application (Client) ID:</label>
                 <input
                   type="text"
                   required
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                   value={msClientId}
                   onChange={(e) => setMsClientId(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-sky-500 focus:bg-white dark:focus:bg-[#121921]"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   ID da App Registration criada no Microsoft Entra ID.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">
+                <label className="font-bold text-slate-700 dark:text-slate-200">
                   Client Secret (Valor do Segredo):
                   {data?.microsoft?.clientSecretConfigured && (
-                    <span className="text-emerald-400 font-normal pl-2">(Já configurado. Deixe vazio para manter)</span>
+                    <span className="text-emerald-500 font-normal pl-2">(Já configurado. Deixe vazio para manter)</span>
                   )}
                 </label>
                 <input
@@ -600,51 +600,51 @@ export default function IntegrationsPage() {
                   placeholder={data?.microsoft?.clientSecretConfigured ? "•••••••••••• (Inalterado)" : "Cole aqui o segredo gerado no Entra ID"}
                   value={msClientSecret}
                   onChange={(e) => setMsClientSecret(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-sky-500 focus:bg-white dark:focus:bg-[#121921]"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Valor do segredo gerado em "Certificates & secrets" no portal do Azure.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">Domínio Principal Microsoft 365:</label>
+                <label className="font-bold text-slate-700 dark:text-slate-200">Domínio Principal Microsoft 365:</label>
                 <input
                   type="text"
                   required
                   placeholder="dynamox.net ou enging.pt"
                   value={msTargetDomain}
                   onChange={(e) => setMsTargetDomain(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-sky-500 focus:bg-white dark:focus:bg-[#121921]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-200">Microsoft Purview PST SAS URL (Azure Blob Storage):</label>
+                <label className="font-bold text-slate-700 dark:text-slate-200">Microsoft Purview PST SAS URL (Azure Blob Storage):</label>
                 <input
                   type="text"
                   placeholder="https://ingestionprodeu1.blob.core.windows.net/ingestiondir...?sv=2015-04-05&sr=c..."
                   value={msPurviewSasUrl}
                   onChange={(e) => setMsPurviewSasUrl(e.target.value)}
-                  className="w-full bg-[#121921] border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-sky-500 focus:bg-white dark:focus:bg-[#121921]"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   SAS URL temporária fornecida pelo Microsoft Purview Compliance Portal para upload de ficheiros PST com AzCopy.
                 </p>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-700/80">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/80">
                 <button
                   type="button"
                   onClick={() => setIsMicrosoftModalOpen(false)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-bold cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-bold cursor-pointer border border-slate-200 dark:border-slate-600 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={savingMicrosoft}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{savingMicrosoft ? "A Guardar..." : "Guardar Parâmetros Microsoft"}</span>

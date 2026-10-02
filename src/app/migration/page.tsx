@@ -444,9 +444,9 @@ export default function MigrationHubPage() {
       {/* MODAL: REGISTAR PURVIEW JOB ID                                      */}
       {/* ------------------------------------------------------------------- */}
       {activeJobForPurview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h3 className="font-black text-sm text-[#223546] uppercase tracking-wider">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 dark:bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xl max-w-md w-full p-6 space-y-4 text-slate-800 dark:text-white">
+            <h3 className="font-black text-sm text-[#223546] dark:text-white uppercase tracking-wider">
               Registar Microsoft Purview Import Job ID
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">

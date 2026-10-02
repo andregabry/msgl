@@ -67,16 +67,22 @@ function sanitizeMetadata(data?: Record<string, unknown>): Record<string, unknow
 
 export async function logAudit(params: LogAuditParams): Promise<void> {
   try {
+    const isUuid = params.actorUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(params.actorUserId);
+    const metadata = sanitizeMetadata(params.metadata);
+    if (params.actorUserId && !isUuid) {
+      (metadata as Record<string, unknown>).actor = params.actorUserId;
+    }
+
     await prisma.auditEvent.create({
       data: {
-        actorUserId: params.actorUserId || null,
+        actorUserId: isUuid ? params.actorUserId : null,
         action: params.action,
         entityType: params.entityType,
         entityId: params.entityId || null,
         provider: params.provider || "SYSTEM",
         ipAddress: params.ipAddress || null,
         userAgent: params.userAgent || null,
-        metadata: sanitizeMetadata(params.metadata) as any,
+        metadata: metadata as any,
       },
     });
   } catch (error) {

@@ -33,16 +33,16 @@ export default function PlatformUsersPage() {
       html: `
         <div class="space-y-4 text-left pt-2">
           <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1">Nome de Exibição:</label>
-            <input id="swal-name" class="w-full bg-[#121921] border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none" placeholder="Ex: Maria Santos">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nome de Exibição:</label>
+            <input id="swal-name" class="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none" placeholder="Ex: Maria Santos">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1">E-mail Principal:</label>
-            <input id="swal-email" type="email" class="w-full bg-[#121921] border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none" placeholder="colaborador@dominio.pt">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">E-mail Principal:</label>
+            <input id="swal-email" type="email" class="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none" placeholder="colaborador@dominio.pt">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1">Função / Perfil RBAC:</label>
-            <select id="swal-role" class="w-full bg-[#121921] border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Função / Perfil RBAC:</label>
+            <select id="swal-role" class="w-full bg-slate-50 dark:bg-[#121921] border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:border-[#e95c0c] focus:outline-none">
               <option value="USER">USER (Acesso ao Portal 'Meus Chats')</option>
               <option value="BACKUP_OPERATOR">BACKUP_OPERATOR (Gestão de Backups Vault)</option>
               <option value="MIGRATION_OPERATOR">MIGRATION_OPERATOR (Preparação & Purview)</option>

@@ -43,9 +43,9 @@ export async function GET(req: NextRequest) {
 
     const google = {
       isConfigured: isGoogleConfigured(),
-      serviceAccountKeyPath: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || "C:/Users/andre.gabry/Projects/m365/service-account.json",
+      serviceAccountKeyPath: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || "C:/Users/andre.gabry/Projects/migrate-system/service-account.json",
       adminImpersonated: process.env.GOOGLE_IMPERSONATED_ADMIN || "andre.gabry@enging.pt",
-      projectId: process.env.GOOGLE_PROJECT_ID || "enging-migration",
+      projectId: process.env.GOOGLE_PROJECT_ID || "migram365-489017",
       customerId: process.env.GOOGLE_CUSTOMER_ID || "my_customer",
       matterId: process.env.GOOGLE_VAULT_MATTER_ID || "",
       allowedDomain: process.env.GOOGLE_ALLOWED_DOMAIN || "enging.pt",
@@ -86,11 +86,33 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Test real connection to Google Directory or Vault
+      // Test real connection to Google Directory and Vault
       try {
         const auth = getGoogleAuthClient();
         await auth.getAccessToken();
-        const matterId = await googleVaultService.getOrCreateAppMatter();
+
+        // 1. Verify Google Directory API (Users & Groups)
+        const { google } = await import("googleapis");
+        const adminApi = google.admin({ version: "directory_v1", auth });
+        const customer = process.env.GOOGLE_CUSTOMER_ID || "my_customer";
+
+        const [usersTest, groupsTest] = await Promise.all([
+          adminApi.users.list({ customer, maxResults: 1 }),
+          adminApi.groups.list({ customer, maxResults: 1 }),
+        ]);
+
+        const totalUsersFound = usersTest.data.users?.length || 0;
+        const totalGroupsFound = groupsTest.data.groups?.length || 0;
+
+        // 2. Check Vault status gracefully
+        let vaultInfo = "";
+        let matterId: string | null = null;
+        try {
+          matterId = await googleVaultService.getOrCreateAppMatter();
+          vaultInfo = ` (Matter ID: ${matterId})`;
+        } catch (vaultErr: any) {
+          vaultInfo = " (Google Vault pendente de ativação na edição do Google Workspace)";
+        }
 
         await prisma.integrationConnection.upsert({
           where: { provider: "GOOGLE_WORKSPACE" },
@@ -103,23 +125,23 @@ export async function POST(req: NextRequest) {
           action: "INTEGRATION_CONFIG_CHANGED",
           entityType: "INTEGRATION",
           provider: "GOOGLE",
-          metadata: { test: "SUCCESS", matterId },
+          metadata: { test: "SUCCESS", matterId, totalUsersFound, totalGroupsFound },
         });
 
         return NextResponse.json({
           success: true,
-          message: `Ligação ao Google Workspace e Google Vault verificada com sucesso! (Matter ID: ${matterId})`,
+          message: `Ligação ao Google Workspace verificada com sucesso! API Directory (Contas e Grupos) e Delegação de Domínio 100% operacionais.${vaultInfo}`,
         });
-      } catch (vaultErr: any) {
+      } catch (googleErr: any) {
         await prisma.integrationConnection.upsert({
           where: { provider: "GOOGLE_WORKSPACE" },
-          update: { status: "ERROR", lastTestedAt: new Date(), error: vaultErr.message },
-          create: { provider: "GOOGLE_WORKSPACE", status: "ERROR", lastTestedAt: new Date(), error: vaultErr.message },
+          update: { status: "ERROR", lastTestedAt: new Date(), error: googleErr.message },
+          create: { provider: "GOOGLE_WORKSPACE", status: "ERROR", lastTestedAt: new Date(), error: googleErr.message },
         });
 
         return NextResponse.json({
           success: false,
-          message: `Erro na autenticação com a Google: ${vaultErr.message}. Verifique a Delegação em Todo o Domínio (Domain-Wide Delegation) e se a Google Vault API está ativa.`,
+          message: `Erro na autenticação com a Google: ${googleErr.message}. Verifique a Service Account e a Delegação em Todo o Domínio (Domain-Wide Delegation).`,
         });
       }
     }

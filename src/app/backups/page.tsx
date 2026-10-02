@@ -276,10 +276,10 @@ export default function BackupsPage() {
       {/* MODAL: IMPORTAR BACKUP EXISTENTE                                    */}
       {/* ------------------------------------------------------------------- */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h2 className="text-base font-black text-[#223546] flex items-center gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 dark:bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xl max-w-lg w-full p-6 space-y-4 text-slate-800 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700/80 pb-3">
+              <h2 className="text-base font-black text-[#223546] dark:text-white flex items-center gap-2">
                 <FolderInput className="w-5 h-5 text-[#e95c0c]" />
                 Importar Backup Local Existente
               </h2>
@@ -387,11 +387,11 @@ export default function BackupsPage() {
       {/* MODAL: DETALHES DO BACKUP COM TIMELINE                              */}
       {/* ------------------------------------------------------------------- */}
       {selectedBackup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 dark:bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#1c2836] rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-2xl max-w-2xl w-full p-6 space-y-5 text-slate-800 dark:text-white animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700/80 pb-3">
               <div>
-                <h2 className="text-base font-black text-[#223546]">
+                <h2 className="text-base font-black text-[#223546] dark:text-white">
                   Detalhes do Backup: {selectedBackup.entityEmail}
                 </h2>
                 <p className="text-xs text-slate-400 font-mono">ID: {selectedBackup.id}</p>

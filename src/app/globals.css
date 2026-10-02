@@ -41,6 +41,14 @@ body {
 }
 
 /* =================================================================== */
+/* TOP NAVBAR ORANGE BORDER (Zero Radius, 4px Solid #e95c0c)           */
+/* Matches the left border of the active sidebar buttons               */
+/* =================================================================== */
+.top-navbar {
+  border-top: 4px solid #e95c0c !important;
+}
+
+/* =================================================================== */
 /* DUAL DARK SIDEBAR (Zero Radius on Left Orange Border)                */
 /* Typography: +3px larger font for labels, titles and navigation links */
 /* Widths: 72px primary, 215px secondary to accommodate typography     */
@@ -170,8 +178,7 @@ body {
 }
 
 /* =================================================================== */
-/* SWEETALERT2 NOTIFICATIONS & DIALOGS THEME & BACKDROP REMOVAL        */
-/* Complete removal of dark transparent background overlay             */
+/* SWEETALERT2: TRANSPARENT BACKDROP & LIGHT MODE AS UNIVERSAL DEFAULT */
 /* =================================================================== */
 .swal2-container {
   background: transparent !important;
@@ -195,77 +202,90 @@ body {
   margin-top: 1.5rem !important;
 }
 
-/* Light Mode SweetAlert2 */
-html:not(.dark) .swal2-popup.swal2-toast {
+/* Light Mode SweetAlert2 (DEFAULT for all popups) */
+.swal2-popup {
   background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
-  color: #1e293b !important;
-  border-radius: 0.85rem !important;
-}
-
-html:not(.dark) .swal2-popup.swal2-modal {
-  background: #ffffff !important;
+  background-color: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 1.25rem !important;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.18) !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15) !important;
   color: #1e293b !important;
 }
 
-html:not(.dark) .swal2-title {
+.swal2-popup.swal2-toast {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.85rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  color: #1e293b !important;
+}
+
+.swal2-title {
   color: #0f172a !important;
   font-weight: 800 !important;
   font-size: 1.25rem !important;
 }
 
-html:not(.dark) .swal2-html-container {
+.swal2-html-container {
   color: #475569 !important;
   font-size: 0.95rem !important;
   line-height: 1.5 !important;
 }
 
-html:not(.dark) .swal2-close {
+.swal2-close {
   color: #64748b !important;
 }
 
-html:not(.dark) .swal2-modal input,
-html:not(.dark) .swal2-modal select {
+.swal2-input,
+.swal2-select,
+.swal2-textarea,
+.swal2-modal input,
+.swal2-modal select {
   background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
+  border: 1px solid #cbd5e1 !important;
   color: #1e293b !important;
 }
 
-/* Dark Mode SweetAlert2 */
-html.dark .swal2-popup.swal2-toast {
+/* Dark Mode SweetAlert2 (ONLY WHEN html HAS .dark CLASS) */
+html.dark .swal2-popup {
   background: #1c2836 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  color: #ffffff !important;
-  border-radius: 0.85rem !important;
-}
-
-html.dark .swal2-popup.swal2-modal {
-  background: #1c2836 !important;
+  background-color: #1c2836 !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 1.25rem !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
   color: #ffffff !important;
 }
 
+html.dark .swal2-popup.swal2-toast {
+  background: #1c2836 !important;
+  background-color: #1c2836 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0.85rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  color: #ffffff !important;
+}
+
 html.dark .swal2-title {
   color: #ffffff !important;
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;
 }
 
 html.dark .swal2-html-container {
   color: #cbd5e1 !important;
-  font-size: 0.95rem !important;
-  line-height: 1.5 !important;
 }
 
 html.dark .swal2-close {
   color: #94a3b8 !important;
+}
+
+html.dark .swal2-input,
+html.dark .swal2-select,
+html.dark .swal2-textarea,
+html.dark .swal2-modal input,
+html.dark .swal2-modal select {
+  background-color: #121921 !important;
+  border-color: #334155 !important;
+  color: #ffffff !important;
 }
 
 /* =================================================================== */
