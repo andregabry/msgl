@@ -10,9 +10,25 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get("q") || "";
     const spaceId = searchParams.get("spaceId") || undefined;
     const participantEmail = searchParams.get("participantEmail") || undefined;
-    const startDate = searchParams.get("startDate") ? new Date(searchParams.get("startDate")!) : undefined;
-    const endDate = searchParams.get("endDate") ? new Date(searchParams.get("endDate")!) : undefined;
-    const limit = parseInt(searchParams.get("limit") || "30", 10);
+    let startDate: Date | undefined = undefined;
+    if (searchParams.get("startDate")) {
+      const parsedStart = new Date(searchParams.get("startDate")!);
+      if (!isNaN(parsedStart.getTime())) {
+        parsedStart.setUTCHours(0, 0, 0, 0);
+        startDate = parsedStart;
+      }
+    }
+
+    let endDate: Date | undefined = undefined;
+    if (searchParams.get("endDate")) {
+      const parsedEnd = new Date(searchParams.get("endDate")!);
+      if (!isNaN(parsedEnd.getTime())) {
+        parsedEnd.setUTCHours(23, 59, 59, 999);
+        endDate = parsedEnd;
+      }
+    }
+
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
 
     const results = await chatQueryService.searchMessages({
       appUserId: user.userId,
