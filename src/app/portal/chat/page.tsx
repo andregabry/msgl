@@ -31,6 +31,23 @@ import {
 import { toast, dialog, showLoading, hideLoading, confirmAction } from "@/lib/swal";
 import GoogleChatAuth from "@/components/GoogleChatAuth";
 
+const ARCHIVE_YEARS = [
+  "2026",
+  "2025",
+  "2024",
+  "2023",
+  "2022",
+  "2021",
+  "2020",
+  "2019",
+  "2018",
+  "2017",
+  "2016",
+  "2015",
+  "2014",
+  "2013",
+];
+
 export default function GoogleChatPortalPage() {
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -51,7 +68,7 @@ export default function GoogleChatPortalPage() {
   const [totalSpaceMessages, setTotalSpaceMessages] = useState<number>(0);
   const [conversationSearch, setConversationSearch] = useState("");
   const [conversationSearchActive, setConversationSearchActive] = useState("");
-  const [activeDatePreset, setActiveDatePreset] = useState<string>("ALL");
+  const [selectedYear, setSelectedYear] = useState<string>("ALL");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const timelineRef = React.useRef<HTMLDivElement>(null);
 
@@ -286,25 +303,50 @@ export default function GoogleChatPortalPage() {
     }
   };
 
-  // Date Presets Handler
-  const handleDatePreset = (preset: "ALL" | "2026" | "2025" | "2024" | "PRE_2025") => {
-    setActiveDatePreset(preset);
-    if (preset === "ALL") {
+  // Date & Year Filter Handlers
+  const handleYearSelect = (year: string) => {
+    setSelectedYear(year);
+    if (year === "ALL") {
       setStartDate("");
       setEndDate("");
-    } else if (preset === "2026") {
-      setStartDate("2026-01-01");
-      setEndDate("2026-12-31");
-    } else if (preset === "2025") {
-      setStartDate("2025-01-01");
-      setEndDate("2025-12-31");
-    } else if (preset === "2024") {
-      setStartDate("2024-01-01");
-      setEndDate("2024-12-31");
-    } else if (preset === "PRE_2025") {
-      setStartDate("");
-      setEndDate("2024-12-31");
+    } else if (year === "CUSTOM") {
+      // Keep existing custom dates
+    } else {
+      setStartDate(`${year}-01-01`);
+      setEndDate(`${year}-12-31`);
     }
+  };
+
+  const updateYearFromDates = (start: string, end: string) => {
+    if (!start && !end) {
+      setSelectedYear("ALL");
+      return;
+    }
+    if (start && end && start.endsWith("-01-01") && end.endsWith("-12-31")) {
+      const yStart = start.slice(0, 4);
+      const yEnd = end.slice(0, 4);
+      if (yStart === yEnd && ARCHIVE_YEARS.includes(yStart)) {
+        setSelectedYear(yStart);
+        return;
+      }
+    }
+    setSelectedYear("CUSTOM");
+  };
+
+  const handleCustomStartDate = (val: string) => {
+    setStartDate(val);
+    updateYearFromDates(val, endDate);
+  };
+
+  const handleCustomEndDate = (val: string) => {
+    setEndDate(val);
+    updateYearFromDates(startDate, val);
+  };
+
+  const handleClearDateFilter = () => {
+    setSelectedYear("ALL");
+    setStartDate("");
+    setEndDate("");
   };
 
   // In-Conversation Search Handlers
@@ -856,97 +898,61 @@ export default function GoogleChatPortalPage() {
                       </button>
                     </form>
 
-                    {/* DATE PRESETS AND CUSTOM INPUTS */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <div className="flex items-center bg-white dark:bg-[#15202c] border border-slate-200 dark:border-slate-700 rounded-lg p-0.5 text-[11px]">
-                        <button
-                          onClick={() => handleDatePreset("ALL")}
-                          className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
-                            activeDatePreset === "ALL" && !startDate && !endDate
-                              ? "bg-[#e95c0c] text-white"
-                              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                          }`}
+                    {/* UNIFIED DATE & YEAR FILTER FIELD */}
+                    <div className="flex items-center bg-white dark:bg-[#121921] border border-slate-200 dark:border-slate-700/80 rounded-lg px-2.5 py-1 text-xs shadow-2xs divide-x divide-slate-200 dark:divide-slate-700">
+                      {/* Integrated Year Selector */}
+                      <div className="flex items-center gap-1.5 pr-2.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#e95c0c] shrink-0" />
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Ano:</span>
+                        <select
+                          value={selectedYear}
+                          onChange={(e) => handleYearSelect(e.target.value)}
+                          className="bg-transparent text-slate-800 dark:text-slate-100 text-[11px] font-bold focus:outline-none cursor-pointer pr-1"
+                          title="Selecionar ano de mensagens arquivadas"
                         >
-                          Todas
-                        </button>
-                        <button
-                          onClick={() => handleDatePreset("2026")}
-                          className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
-                            activeDatePreset === "2026"
-                              ? "bg-[#e95c0c] text-white"
-                              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                          }`}
-                        >
-                          2026
-                        </button>
-                        <button
-                          onClick={() => handleDatePreset("2025")}
-                          className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
-                            activeDatePreset === "2025"
-                              ? "bg-[#e95c0c] text-white"
-                              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                          }`}
-                        >
-                          2025
-                        </button>
-                        <button
-                          onClick={() => handleDatePreset("2024")}
-                          className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
-                            activeDatePreset === "2024"
-                              ? "bg-[#e95c0c] text-white"
-                              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                          }`}
-                        >
-                          2024
-                        </button>
-                        <button
-                          onClick={() => handleDatePreset("PRE_2025")}
-                          className={`px-2 py-0.5 rounded font-bold transition cursor-pointer ${
-                            activeDatePreset === "PRE_2025"
-                              ? "bg-[#e95c0c] text-white"
-                              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                          }`}
-                          title="Mensagens anteriores a 2025"
-                        >
-                          &lt; 2025
-                        </button>
+                          <option value="ALL" className="bg-white dark:bg-[#15202c] text-slate-800 dark:text-slate-100">
+                            Todos
+                          </option>
+                          {ARCHIVE_YEARS.map((yr) => (
+                            <option key={yr} value={yr} className="bg-white dark:bg-[#15202c] text-slate-800 dark:text-slate-100">
+                              {yr}
+                            </option>
+                          ))}
+                          <option value="CUSTOM" className="bg-white dark:bg-[#15202c] text-slate-800 dark:text-slate-100">
+                            Personalizado
+                          </option>
+                        </select>
                       </div>
 
-                      {/* Custom Date Inputs */}
-                      <div className="flex items-center gap-1 bg-white dark:bg-[#15202c] border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      {/* Exact Date Range Inputs */}
+                      <div className="flex items-center gap-1.5 pl-2.5 text-[11px]">
                         <input
                           type="date"
                           value={startDate}
-                          onChange={(e) => {
-                            setActiveDatePreset("CUSTOM");
-                            setStartDate(e.target.value);
-                          }}
-                          className="bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none text-[11px]"
+                          onChange={(e) => handleCustomStartDate(e.target.value)}
+                          className="bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer text-[11px]"
                           title="Data Inicial"
                         />
-                        <span className="text-slate-400 text-[10px]">até</span>
+                        <span className="text-slate-400 text-[10px] font-medium">até</span>
                         <input
                           type="date"
                           value={endDate}
-                          onChange={(e) => {
-                            setActiveDatePreset("CUSTOM");
-                            setEndDate(e.target.value);
-                          }}
-                          className="bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none text-[11px]"
+                          onChange={(e) => handleCustomEndDate(e.target.value)}
+                          className="bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer text-[11px]"
                           title="Data Final"
                         />
-                      </div>
 
-                      {(startDate || endDate) && (
-                        <button
-                          onClick={() => handleDatePreset("ALL")}
-                          className="px-2 py-1 text-[11px] font-bold text-rose-500 hover:text-rose-700 transition cursor-pointer"
-                          title="Limpar filtro de data"
-                        >
-                          Limpar
-                        </button>
-                      )}
+                        {(startDate || endDate || selectedYear !== "ALL") && (
+                          <button
+                            type="button"
+                            onClick={handleClearDateFilter}
+                            className="ml-1 p-0.5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition cursor-pointer rounded"
+                            title="Limpar filtro de data e ano"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -982,6 +988,8 @@ export default function GoogleChatPortalPage() {
                       <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
                         {conversationSearchActive
                           ? `Nenhuma mensagem encontrada para "${conversationSearchActive}"`
+                          : (startDate || endDate || selectedYear !== "ALL")
+                          ? `Nenhuma mensagem encontrada para o período selecionado (${selectedYear !== "ALL" && selectedYear !== "CUSTOM" ? selectedYear : `${startDate} a ${endDate}`})`
                           : "Nenhuma mensagem arquivada nesta conversa"}
                       </h3>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">
@@ -991,6 +999,13 @@ export default function GoogleChatPortalPage() {
                             className="text-[#e95c0c] font-bold underline hover:text-[#c84c06] cursor-pointer"
                           >
                             Clique aqui para limpar a pesquisa e ver todas as mensagens.
+                          </button>
+                        ) : (startDate || endDate || selectedYear !== "ALL") ? (
+                          <button
+                            onClick={handleClearDateFilter}
+                            className="text-[#e95c0c] font-bold underline hover:text-[#c84c06] cursor-pointer"
+                          >
+                            Clique aqui para limpar o filtro de data e ver todas as mensagens.
                           </button>
                         ) : (
                           "Se este canal contém backups recentes, certifique-se de que a exportação do Google Chat foi processada."
