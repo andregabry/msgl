@@ -26,6 +26,7 @@ import {
   ArrowDown,
   ArrowUp,
   X,
+  Eye,
   SlidersHorizontal,
 } from "lucide-react";
 import { toast, dialog, showLoading, hideLoading, confirmAction } from "@/lib/swal";
@@ -70,6 +71,7 @@ export default function GoogleChatPortalPage() {
   const [conversationSearchActive, setConversationSearchActive] = useState("");
   const [selectedYear, setSelectedYear] = useState<string>("ALL");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [previewImage, setPreviewImage] = useState<{ url: string; filename: string } | null>(null);
   const timelineRef = React.useRef<HTMLDivElement>(null);
 
   // Filters
@@ -395,6 +397,47 @@ export default function GoogleChatPortalPage() {
         part
       )
     );
+  };
+
+  // Attachment helper functions
+  const isImageAttachment = (filename?: string, mimeType?: string) => {
+    if (mimeType?.toLowerCase().startsWith("image/")) return true;
+    if (!filename) return false;
+    const ext = filename.toLowerCase().split(".").pop();
+    return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext || "");
+  };
+
+  const isViewableInBrowser = (filename?: string, mimeType?: string) => {
+    if (isImageAttachment(filename, mimeType)) return true;
+    if (mimeType?.toLowerCase().includes("pdf")) return true;
+    if (mimeType?.toLowerCase().includes("text/")) return true;
+    const ext = filename?.toLowerCase().split(".").pop();
+    return ["pdf", "txt", "html", "json", "csv"].includes(ext || "");
+  };
+
+  const getFileIcon = (filename?: string, mimeType?: string) => {
+    const ext = filename?.toLowerCase().split(".").pop() || "";
+    if (ext === "pdf" || mimeType?.includes("pdf")) {
+      return <FileText className="w-4 h-4 text-rose-500" />;
+    }
+    if (["xls", "xlsx", "csv", "xlsb"].includes(ext)) {
+      return <FileText className="w-4 h-4 text-emerald-500" />;
+    }
+    if (["doc", "docx"].includes(ext)) {
+      return <FileText className="w-4 h-4 text-blue-500" />;
+    }
+    if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) {
+      return <Paperclip className="w-4 h-4 text-amber-500" />;
+    }
+    return <FileText className="w-4 h-4 text-[#e95c0c]" />;
+  };
+
+  const formatFileSize = (bytes?: string | number) => {
+    const num = Number(bytes);
+    if (!num || isNaN(num) || num <= 0) return "Ficheiro anexado";
+    if (num < 1024) return `${num} B`;
+    if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+    return `${(num / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   // Search across messages
@@ -1064,30 +1107,118 @@ export default function GoogleChatPortalPage() {
 
                               {/* Attachments Section */}
                               {m.attachments && m.attachments.length > 0 && (
-                                <div className="pt-2 border-t border-slate-200 dark:border-slate-700/60 space-y-1.5">
-                                  {m.attachments.map((att: any) => (
-                                    <div
-                                      key={att.id}
-                                      className="p-2 bg-white/70 dark:bg-[#15202c]/70 border border-slate-200 dark:border-slate-700/80 rounded-lg flex items-center justify-between gap-2 text-xs"
-                                    >
-                                      <div className="flex items-center gap-2 truncate">
-                                        <Paperclip className="w-3.5 h-3.5 text-[#e95c0c] shrink-0" />
-                                        <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
-                                          {att.filename}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 shrink-0">
-                                          ({(Number(att.bytes) / 1024).toFixed(1)} KB)
-                                        </span>
-                                      </div>
-                                      <button
-                                        onClick={() => toast.info("Download de Anexo", `A transferir: ${att.filename}`)}
-                                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-500 hover:text-slate-800 dark:hover:text-white transition"
-                                        title="Descarregar ficheiro arquivado"
+                                <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/60 space-y-2">
+                                  {m.attachments.map((att: any) => {
+                                    const isImg = isImageAttachment(att.filename, att.mimeType);
+
+                                    if (isImg) {
+                                      return (
+                                        <div
+                                          key={att.id}
+                                          className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/80 bg-white/60 dark:bg-[#121921]/60 shadow-2xs max-w-sm"
+                                        >
+                                          {/* Inline Image Preview */}
+                                          <div
+                                            onClick={() =>
+                                              setPreviewImage({
+                                                url: `/api/chat/attachments/${att.id}?view=true`,
+                                                filename: att.filename,
+                                              })
+                                            }
+                                            className="relative group cursor-pointer bg-slate-100 dark:bg-black/40 flex items-center justify-center min-h-[120px] max-h-64 overflow-hidden"
+                                          >
+                                            <img
+                                              src={`/api/chat/attachments/${att.id}?view=true`}
+                                              alt={att.filename || "Imagem"}
+                                              loading="lazy"
+                                              className="w-full h-auto max-h-64 object-contain transition duration-200 group-hover:scale-102"
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center gap-1.5 text-white text-xs font-bold">
+                                              <Eye className="w-4 h-4" />
+                                              <span>Ver imagem</span>
+                                            </div>
+                                          </div>
+
+                                          {/* Image Footer with Name & Actions */}
+                                          <div className="p-2 bg-white/95 dark:bg-[#15202c]/95 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-2 text-xs">
+                                            <div className="truncate min-w-0">
+                                              <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-[11px]" title={att.filename}>
+                                                {att.filename}
+                                              </p>
+                                              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                                                {formatFileSize(att.bytes)}
+                                              </p>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              <a
+                                                href={`/api/chat/attachments/${att.id}?view=true`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white transition"
+                                                title="Abrir imagem numa nova aba"
+                                              >
+                                                <Eye className="w-3.5 h-3.5" />
+                                              </a>
+                                              <a
+                                                href={`/api/chat/attachments/${att.id}/download`}
+                                                download={att.filename}
+                                                className="p-1.5 bg-[#e95c0c]/10 hover:bg-[#e95c0c] text-[#e95c0c] hover:text-white rounded-lg transition"
+                                                title="Descarregar imagem"
+                                              >
+                                                <Download className="w-3.5 h-3.5" />
+                                              </a>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    // Document / General File Card
+                                    return (
+                                      <div
+                                        key={att.id}
+                                        className="p-2.5 bg-white/90 dark:bg-[#15202c]/90 border border-slate-200 dark:border-slate-700/80 rounded-xl flex items-center justify-between gap-2.5 text-xs shadow-2xs hover:border-[#e95c0c]/40 transition"
                                       >
-                                        <Download className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  ))}
+                                        <div className="flex items-center gap-2.5 truncate min-w-0">
+                                          <div className="w-8 h-8 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 text-[#e95c0c] flex items-center justify-center shrink-0">
+                                            {getFileIcon(att.filename, att.mimeType)}
+                                          </div>
+                                          <div className="truncate min-w-0">
+                                            <p className="font-bold text-slate-800 dark:text-slate-200 truncate text-xs" title={att.filename}>
+                                              {att.filename}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                              {formatFileSize(att.bytes)}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                          {isViewableInBrowser(att.filename, att.mimeType) && (
+                                            <a
+                                              href={`/api/chat/attachments/${att.id}?view=true`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white transition flex items-center gap-1 text-[11px] font-medium"
+                                              title="Visualizar documento"
+                                            >
+                                              <Eye className="w-3.5 h-3.5" />
+                                              <span className="hidden sm:inline">Ver</span>
+                                            </a>
+                                          )}
+                                          <a
+                                            href={`/api/chat/attachments/${att.id}/download`}
+                                            download={att.filename}
+                                            className="p-1.5 bg-[#e95c0c]/10 hover:bg-[#e95c0c] text-[#e95c0c] hover:text-white rounded-lg transition flex items-center gap-1 text-[11px] font-bold"
+                                            title="Descarregar ficheiro"
+                                          >
+                                            <Download className="w-3.5 h-3.5" />
+                                            <span className="hidden sm:inline">Descarregar</span>
+                                          </a>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
@@ -1152,6 +1283,51 @@ export default function GoogleChatPortalPage() {
           </div>
         </div>
       </main>
+
+      {/* Image Preview Lightbox Modal */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl max-h-[90vh] bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden flex flex-col shadow-2xl"
+          >
+            <div className="p-3 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between gap-3 text-white">
+              <span className="font-bold text-xs truncate max-w-md">
+                {previewImage.filename}
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewImage.url.replace("view=true", "download=true")}
+                  download={previewImage.filename}
+                  className="p-1.5 bg-[#e95c0c] hover:bg-[#c84c06] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+                  title="Descarregar imagem"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Descarregar</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImage(null)}
+                  className="p-1.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition cursor-pointer"
+                  title="Fechar visualização"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-2 overflow-auto flex items-center justify-center max-h-[calc(90vh-60px)]">
+              <img
+                src={previewImage.url}
+                alt={previewImage.filename}
+                className="max-h-[calc(90vh-80px)] w-auto max-w-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
