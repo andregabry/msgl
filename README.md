@@ -2,8 +2,6 @@
 
 Repositório oficial e centralizado da aplicação de migração e auditoria de Google Groups para caixas compartilhadas e de usuário no Microsoft 365.
 
-**Localização do Projeto:** `C:\Users\andre.gabry\Projects\migrate-system`
-
 ---
 
 ## 1. Visão Geral da Arquitetura
