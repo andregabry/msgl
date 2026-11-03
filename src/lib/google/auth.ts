@@ -12,11 +12,21 @@ export const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/contacts",
   "https://www.googleapis.com/auth/calendar",
   "https://www.googleapis.com/auth/drive.readonly",
+  "https://www.googleapis.com/auth/chat.spaces.readonly",
+  "https://www.googleapis.com/auth/chat.messages.readonly",
 ];
 
-export function getGoogleAuthClient() {
-  const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
-  const adminUser = process.env.GOOGLE_IMPERSONATED_ADMIN;
+function resolveKeyPath(): string | null {
+  const envPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+  if (envPath && fs.existsSync(envPath)) return envPath;
+  if (fs.existsSync("/app/service-account.json")) return "/app/service-account.json";
+  if (fs.existsSync("service-account.json")) return "service-account.json";
+  return envPath || null;
+}
+
+export function getGoogleAuthClient(impersonatedUser?: string) {
+  const keyPath = resolveKeyPath();
+  const adminUser = impersonatedUser || process.env.GOOGLE_IMPERSONATED_ADMIN;
 
   if (!keyPath || !fs.existsSync(keyPath)) {
     throw new Error(
@@ -38,6 +48,6 @@ export function getGoogleAuthClient() {
 }
 
 export function isGoogleConfigured(): boolean {
-  const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+  const keyPath = resolveKeyPath();
   return Boolean(keyPath && fs.existsSync(keyPath));
 }

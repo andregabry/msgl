@@ -16,6 +16,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . ./
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL="postgresql://postgres:dummy@localhost:5432/migrate_system?schema=public"
 RUN npx prisma generate
 RUN npm run build
 
@@ -35,6 +36,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/service-account.json* ./
+
+RUN touch /app/.env && chown nextjs:nodejs /app /app/.env && chmod 775 /app && chmod 664 /app/.env
 
 USER nextjs
 

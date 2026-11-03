@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth/session";
 import { storageProvider } from "@/lib/storage/backup-storage.provider";
 import { logAudit } from "@/lib/audit/audit.service";
 import fs from "fs";
+import path from "path";
 
 export async function GET(
   req: NextRequest,
@@ -12,18 +13,51 @@ export async function GET(
   try {
     const user = await requireAuth(req, "backup:download");
 
-    const artifact = await prisma.backupArtifact.findUnique({
+    let artifact = await prisma.backupArtifact.findUnique({
       where: { id: params.id },
       include: { backupRequest: true },
     });
 
     if (!artifact) {
+      artifact = await prisma.backupArtifact.findFirst({
+        where: { backupRequestId: params.id },
+        include: { backupRequest: true },
+      });
+    }
+
+    if (!artifact) {
       return NextResponse.json({ error: "Artefacto de backup não encontrado." }, { status: 404 });
     }
 
-    const safePath = storageProvider.resolveSafePath(artifact.relativePath);
-    if (!fs.existsSync(safePath)) {
-      return NextResponse.json({ error: "Ficheiro físico não encontrado no storage." }, { status: 404 });
+    let safePath = "";
+    if (artifact.relativePath) {
+      try {
+        const resolved = storageProvider.resolveSafePath(artifact.relativePath);
+        if (fs.existsSync(resolved)) {
+          safePath = resolved;
+        }
+      } catch {}
+    }
+
+    if (!safePath && artifact.backupRequest) {
+      const cleanService = (artifact.backupRequest.serviceType || "general").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      const cleanEmail = (artifact.backupRequest.entityEmail || "unknown").toLowerCase().replace(/[^a-z0-9@._-]/g, "_");
+      const filename = artifact.originalFilename || artifact.storedFilename;
+      const internal = path.resolve(process.cwd(), "storage/backups", cleanService, cleanEmail, filename);
+      if (fs.existsSync(internal)) {
+        safePath = internal;
+      }
+    }
+
+    if (!safePath && artifact.backupRequest?.criteria) {
+      const importedFrom = (artifact.backupRequest.criteria as any).importedFrom;
+      if (importedFrom && fs.existsSync(importedFrom)) {
+        safePath = importedFrom;
+      }
+    }
+
+    if (!safePath || !fs.existsSync(safePath)) {
+      return NextResponse.json({ error: "Ficheiro físico não encontrado no storage local." }, { status: 404 });
     }
 
     const stat = fs.statSync(safePath);

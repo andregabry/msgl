@@ -10,24 +10,31 @@ import fs from "fs";
 import path from "path";
 
 function updateEnvFile(updates: Record<string, string>) {
-  const envPath = path.resolve(process.cwd(), ".env");
-  let content = "";
-  if (fs.existsSync(envPath)) {
-    content = fs.readFileSync(envPath, "utf-8");
-  }
-
   for (const [key, val] of Object.entries(updates)) {
     process.env[key] = val; // Update active runtime in memory immediately
-    const regex = new RegExp(`^${key}=.*$`, "m");
-    const escapedVal = val.includes(" ") || val.includes(":") || val.includes("\\") ? `"${val}"` : val;
-    if (regex.test(content)) {
-      content = content.replace(regex, `${key}=${escapedVal}`);
-    } else {
-      content += `\n${key}=${escapedVal}`;
-    }
   }
 
-  fs.writeFileSync(envPath, content, "utf-8");
+  try {
+    const envPath = path.resolve(process.cwd(), ".env");
+    let content = "";
+    if (fs.existsSync(envPath)) {
+      content = fs.readFileSync(envPath, "utf-8");
+    }
+
+    for (const [key, val] of Object.entries(updates)) {
+      const regex = new RegExp(`^${key}=.*$`, "m");
+      const escapedVal = val.includes(" ") || val.includes(":") || val.includes("\\") ? `"${val}"` : val;
+      if (regex.test(content)) {
+        content = content.replace(regex, `${key}=${escapedVal}`);
+      } else {
+        content += `\n${key}=${escapedVal}`;
+      }
+    }
+
+    fs.writeFileSync(envPath, content, "utf-8");
+  } catch (err: any) {
+    console.warn("Aviso ao gravar em .env (ignorado com segurança, runtime e BD atualizados):", err.message);
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -42,27 +49,55 @@ export async function GET(req: NextRequest) {
       where: { provider: "MICROSOFT_365" },
     });
 
+    const gConfig = (googleConn?.config as any) || {};
+    const msConfig = (msConn?.config as any) || {};
+
+    const defaultSaPath = fs.existsSync("/app/service-account.json")
+      ? "/app/service-account.json"
+      : fs.existsSync("C:/Users/andre.gabry/Projects/migrate-system/service-account.json")
+      ? "C:/Users/andre.gabry/Projects/migrate-system/service-account.json"
+      : path.resolve(process.cwd(), "service-account.json");
+
     const google = {
       isConfigured: isGoogleConfigured(),
-      serviceAccountKeyPath: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || "C:/Users/andre.gabry/Projects/migrate-system/service-account.json",
-      adminImpersonated: process.env.GOOGLE_IMPERSONATED_ADMIN || "andre.gabry@enging.pt",
-      projectId: process.env.GOOGLE_PROJECT_ID || "migram365-489017",
-      customerId: process.env.GOOGLE_CUSTOMER_ID || "my_customer",
-      matterId: process.env.GOOGLE_VAULT_MATTER_ID || "",
-      allowedDomain: process.env.GOOGLE_ALLOWED_DOMAIN || "enging.pt",
+      serviceAccountKeyPath:
+        gConfig.serviceAccountKeyPath ||
+        process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH ||
+        defaultSaPath,
+      adminImpersonated:
+        gConfig.adminImpersonated ||
+        process.env.GOOGLE_IMPERSONATED_ADMIN ||
+        "andre.gabry@enging.pt",
+      projectId:
+        gConfig.projectId ||
+        process.env.GOOGLE_PROJECT_ID ||
+        "migram365-489017",
+      customerId:
+        gConfig.customerId ||
+        process.env.GOOGLE_CUSTOMER_ID ||
+        "my_customer",
+      matterId:
+        gConfig.matterId ||
+        process.env.GOOGLE_VAULT_MATTER_ID ||
+        "",
+      allowedDomain:
+        gConfig.allowedDomain ||
+        process.env.GOOGLE_ALLOWED_DOMAIN ||
+        "enging.pt",
       lastTestedAt: googleConn?.lastTestedAt || null,
       status: googleConn?.status || (isGoogleConfigured() ? "CONNECTED" : "NOT_CONFIGURED"),
     };
 
     const microsoft = {
       isConfigured: graphClient.isConfigured(),
-      tenantId: process.env.MICROSOFT_TENANT_ID || "",
-      clientId: process.env.MICROSOFT_CLIENT_ID || "14d82eec-204b-4c2f-b7e8-296a70dab67e",
+      tenantId: msConfig.tenantId || process.env.MICROSOFT_TENANT_ID || "",
+      clientId: msConfig.clientId || process.env.MICROSOFT_CLIENT_ID || "14d82eec-204b-4c2f-b7e8-296a70dab67e",
       clientSecretConfigured: Boolean(process.env.MICROSOFT_CLIENT_SECRET && process.env.MICROSOFT_CLIENT_SECRET.trim() !== ""),
       clientSecretMasked: process.env.MICROSOFT_CLIENT_SECRET ? "••••••••••••" : "",
-      purviewUploadConfigured: Boolean(process.env.PURVIEW_PST_SAS_URL && process.env.PURVIEW_PST_SAS_URL.trim() !== ""),
-      purviewPstSasUrl: process.env.PURVIEW_PST_SAS_URL || "",
-      targetDomain: process.env.M365_TARGET_DOMAIN || "dynamox.net",
+      purviewUploadConfigured: Boolean(msConfig.purviewPstSasUrlConfigured || (process.env.PURVIEW_PST_SAS_URL && process.env.PURVIEW_PST_SAS_URL.trim() !== "")),
+      purviewPstSasUrl: msConfig.purviewPstSasUrl || process.env.PURVIEW_PST_SAS_URL || "",
+      targetDomain: msConfig.targetDomain || process.env.M365_TARGET_DOMAIN || "dynamox.net",
+      redirectUri: msConfig.redirectUri || process.env.MICROSOFT_REDIRECT_URI || "",
       lastTestedAt: msConn?.lastTestedAt || null,
       status: msConn?.status || (graphClient.isConfigured() ? "CONNECTED" : "NOT_CONFIGURED"),
     };
@@ -277,6 +312,7 @@ export async function PUT(req: NextRequest) {
       }
       if (config.targetDomain !== undefined) updates["M365_TARGET_DOMAIN"] = config.targetDomain.trim();
       if (config.purviewPstSasUrl !== undefined) updates["PURVIEW_PST_SAS_URL"] = config.purviewPstSasUrl.trim();
+      if (config.redirectUri !== undefined) updates["MICROSOFT_REDIRECT_URI"] = config.redirectUri.trim();
 
       updateEnvFile(updates);
       graphClient.resetToken();
@@ -288,6 +324,7 @@ export async function PUT(req: NextRequest) {
             tenantId: updates["MICROSOFT_TENANT_ID"],
             clientId: updates["MICROSOFT_CLIENT_ID"],
             targetDomain: updates["M365_TARGET_DOMAIN"],
+            redirectUri: updates["MICROSOFT_REDIRECT_URI"],
             purviewPstSasUrlConfigured: Boolean(updates["PURVIEW_PST_SAS_URL"]),
           },
           updatedAt: new Date(),
@@ -299,6 +336,7 @@ export async function PUT(req: NextRequest) {
             tenantId: updates["MICROSOFT_TENANT_ID"],
             clientId: updates["MICROSOFT_CLIENT_ID"],
             targetDomain: updates["M365_TARGET_DOMAIN"],
+            redirectUri: updates["MICROSOFT_REDIRECT_URI"],
             purviewPstSasUrlConfigured: Boolean(updates["PURVIEW_PST_SAS_URL"]),
           },
         },

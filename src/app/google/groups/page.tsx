@@ -38,10 +38,15 @@ export default function GoogleGroupsPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [readiness, setReadiness] = useState<any | null>(null);
 
+  // Rows per page & Pagination
+  const [pageSize, setPageSize] = useState<number>(100);
+  const totalPages = Math.max(1, Math.ceil(total / (pageSize === -1 ? total || 1 : pageSize)));
+
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/google/groups?page=${page}&limit=20&search=${encodeURIComponent(search)}`);
+      const limitParam = pageSize === -1 ? "all" : pageSize;
+      const res = await fetch(`/api/google/groups?page=${page}&limit=${limitParam}&search=${encodeURIComponent(search)}`);
       if (res.ok) {
         const data = await res.json();
         setGroups(data.groups || []);
@@ -56,7 +61,7 @@ export default function GoogleGroupsPage() {
 
   useEffect(() => {
     fetchGroups();
-  }, [page, search]);
+  }, [page, search, pageSize]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -103,7 +108,20 @@ export default function GoogleGroupsPage() {
     }
   };
 
-  const handleToggleBackupLocal = async (backupId: string, currentIsDownloaded: boolean) => {
+  const handleToggleBackupLocal = async (
+    backupId: string,
+    currentIsDownloaded: boolean,
+    status?: string,
+    artifactsCount?: number
+  ) => {
+    if (!currentIsDownloaded && status !== "READY" && (!artifactsCount || artifactsCount === 0)) {
+      dialog.info(
+        "Exportação em Processamento no Google Vault",
+        "Este pedido de backup foi submetido no Google Vault e encontra-se a ser gerado pelos servidores da Google Cloud. O download para a aplicação ficará disponível assim que a exportação estiver concluída e pronta."
+      );
+      return;
+    }
+
     if (currentIsDownloaded) {
       const confirmed = await confirmAction({
         title: "Remover Backup Baixado?",
@@ -442,6 +460,59 @@ export default function GoogleGroupsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination & Rows Controls */}
+        <div className="px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="text-slate-500 dark:text-slate-400">
+            A exibir <span className="font-bold text-slate-800 dark:text-slate-200">{groups.length}</span> de{" "}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{total}</span> grupos Google registados
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Linhas por página:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md text-xs font-bold focus:outline-hidden focus:border-[#e95c0c]"
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100 (Todos)</option>
+                <option value={-1}>Todos ({total})</option>
+              </select>
+            </div>
+
+            {/* Page Buttons (if multiple pages) */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-40 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                <span className="px-2 text-slate-600 dark:text-slate-400 font-bold">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-40 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Seguinte
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ------------------------------------------------------------------- */}
@@ -576,10 +647,12 @@ export default function GoogleGroupsPage() {
                                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                     : b.status === "REMOVED_LOCAL"
                                     ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                    : b.status === "REQUESTED"
+                                    ? "bg-sky-50 text-sky-700 border border-sky-200"
                                     : "bg-slate-100 text-slate-700"
                                 }`}
                               >
-                                {b.status}
+                                {b.status === "REQUESTED" ? "Aguardando Vault" : b.status}
                               </span>
                               {b.isDownloaded && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
@@ -598,15 +671,21 @@ export default function GoogleGroupsPage() {
                               <span className="text-[11px] font-bold text-slate-600">Baixar no App:</span>
                               <button
                                 type="button"
-                                onClick={() => handleToggleBackupLocal(b.id, b.isDownloaded)}
+                                onClick={() => handleToggleBackupLocal(b.id, b.isDownloaded, b.status, b.artifacts?.length || 0)}
                                 disabled={togglingId === b.id}
                                 className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                                  b.isDownloaded ? "bg-emerald-600" : "bg-slate-300"
+                                  b.isDownloaded
+                                    ? "bg-emerald-600"
+                                    : b.status === "READY"
+                                    ? "bg-slate-300 hover:bg-slate-400"
+                                    : "bg-slate-200 hover:bg-slate-300"
                                 }`}
                                 title={
                                   b.isDownloaded
                                     ? "Backup baixado no app (clique para remover cópia local)"
-                                    : "Descarregar backup para o app"
+                                    : b.status === "READY"
+                                    ? "Descarregar backup para o app"
+                                    : "Aguardando conclusão da exportação no Google Vault"
                                 }
                               >
                                 <span

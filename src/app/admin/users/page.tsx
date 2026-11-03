@@ -16,7 +16,6 @@ import {
   Settings,
   X,
   Save,
-  LogIn,
   Sliders,
   Check,
   AlertCircle,
@@ -477,47 +476,6 @@ export default function PlatformUsersPage() {
     }
   };
 
-  // Simulate logging in as this user
-  const handleSimulateUser = async (u: UserItem) => {
-    const isTargetChatOnly = u.role === "USER";
-    const confirm = await confirmAction({
-      title: `Simular Sessão de ${u.displayName}?`,
-      text: isTargetChatOnly
-        ? `Este utilizador possui apenas permissão de Google Chat. O sistema abrirá imediatamente o Portal Google Chat (/portal/chat) sem os menus administrativos.`
-        : `Deseja mudar a sessão ativa para ${u.displayName} (${u.role})?`,
-      confirmText: "Simular Agora",
-      cancelText: "Voltar",
-      icon: "question",
-    });
-
-    if (!confirm) return;
-
-    showLoading("A Simular Sessão...", `A autenticar como ${u.email}...`);
-    try {
-      const res = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: u.email, simulate: true }),
-      });
-      const data = await res.json();
-      hideLoading();
-
-      if (res.ok) {
-        toast.success("Sessão Ativada!", `A navegar como ${u.displayName}...`);
-        if (isTargetChatOnly) {
-          window.location.href = "/portal/chat";
-        } else {
-          window.location.href = "/";
-        }
-      } else {
-        dialog.error("Erro de Autenticação", data.error || "Não foi possível simular a sessão.");
-      }
-    } catch (err: any) {
-      hideLoading();
-      dialog.error("Falha", err.message || "Erro inesperado.");
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Title & Top Action Bar */}
@@ -719,19 +677,6 @@ export default function PlatformUsersPage() {
               <Sliders className="w-3.5 h-3.5 text-[#e95c0c]" />
               <span>Configurar Permissões</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                const u = dropdownState.user;
-                setDropdownState(null);
-                handleSimulateUser(u);
-              }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-left cursor-pointer"
-            >
-              <LogIn className="w-3.5 h-3.5 text-slate-400" />
-              <span>Simular Sessão (Chat)</span>
-            </button>
           </div>
         </div>,
         document.body
@@ -740,8 +685,8 @@ export default function PlatformUsersPage() {
       {/* =================================================================== */}
       {/* MODAL 1: GESTÃO DE PALAVRA-PASSE DE UTILIZADOR                      */}
       {/* =================================================================== */}
-      {isPasswordModalOpen && passwordTargetUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-black/75 backdrop-blur-xs transition">
+      {mounted && isPasswordModalOpen && passwordTargetUser && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs transition">
           <div className="bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 text-slate-800 dark:text-white animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-700/60 pb-4">
@@ -958,14 +903,15 @@ export default function PlatformUsersPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* =================================================================== */}
       {/* MODAL 2: CRIAR NOVO UTILIZADOR INTERNO                              */}
       {/* =================================================================== */}
-      {isCreateUserModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-black/75 backdrop-blur-xs transition">
+      {mounted && isCreateUserModalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs transition">
           <div className="bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 text-slate-800 dark:text-white animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-700/60 pb-4">
@@ -1096,14 +1042,15 @@ export default function PlatformUsersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* =================================================================== */}
       {/* MODAL 3: ALTERAR A MINHA PALAVRA-PASSE (SUPER ADMIN)                */}
       {/* =================================================================== */}
-      {isOwnPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-black/75 backdrop-blur-xs transition">
+      {mounted && isOwnPasswordModalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs transition">
           <div className="bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 text-slate-800 dark:text-white animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-700/60 pb-4">
@@ -1240,14 +1187,15 @@ export default function PlatformUsersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* =================================================================== */}
       {/* MODAL 4: PERMISSÕES LIGA / DESLIGA                                  */}
       {/* =================================================================== */}
-      {isPermModalOpen && editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 dark:bg-black/75 backdrop-blur-xs transition">
+      {mounted && isPermModalOpen && editingUser && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs transition">
           <div className="bg-white dark:bg-[#1c2836] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-6 text-slate-800 dark:text-white max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-700/60 pb-4">
@@ -1531,7 +1479,8 @@ export default function PlatformUsersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

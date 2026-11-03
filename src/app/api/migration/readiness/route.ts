@@ -7,20 +7,24 @@ export async function GET(req: NextRequest) {
     await requireAuth(req);
 
     const { searchParams } = new URL(req.url);
-    const groupEmail = searchParams.get("groupEmail");
-    const targetMailbox = searchParams.get("targetMailbox");
+    const sourceEmail = searchParams.get("sourceEmail") || searchParams.get("groupEmail") || "";
+    const targetEmail = searchParams.get("targetEmail") || searchParams.get("targetMailbox") || "";
+    const direction = (searchParams.get("direction") || "GOOGLE_TO_MICROSOFT") as any;
+    const scope = (searchParams.get("scope") || "USERS") as any;
     const backupRequestId = searchParams.get("backupRequestId") || undefined;
 
-    if (!groupEmail || !targetMailbox) {
+    if (!sourceEmail || !targetEmail) {
       return NextResponse.json(
-        { error: "Parâmetros obrigatórios em falta: groupEmail, targetMailbox." },
+        { error: "Parâmetros obrigatórios em falta: sourceEmail, targetEmail." },
         { status: 400 }
       );
     }
 
     const report = await migrationService.checkMigrationReadiness(
-      groupEmail,
-      targetMailbox,
+      sourceEmail,
+      targetEmail,
+      direction,
+      scope,
       backupRequestId
     );
 

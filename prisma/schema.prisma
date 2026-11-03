@@ -174,9 +174,13 @@ model AppUser {
   email              String             @unique
   displayName        String             @map("display_name")
   role               String             @default("USER") // ADMIN, BACKUP_OPERATOR, MIGRATION_OPERATOR, AUDITOR, USER
-  isActive           Boolean            @default(true) @map("is_active")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
+  isActive              Boolean            @default(true) @map("is_active")
+  passwordHash          String?            @map("password_hash")
+  mustChangePassword    Boolean            @default(false) @map("must_change_password")
+  tempPasswordExpiresAt DateTime?          @map("temp_password_expires_at")
+  systemAccess          String             @default("CHAT_PORTAL") @map("system_access") // MSGL, CHAT_PORTAL, BOTH
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
 
   externalIdentities ExternalIdentity[]
   identityLinks      IdentityLink[]
@@ -475,10 +479,15 @@ model ChatUserAccess {
 
 model MigrationMapping {
   id               String            @id @default(uuid()) @db.Uuid
-  sourceGroupId    String            @map("source_group_id") @db.Uuid
+  sourceGroupId    String?           @map("source_group_id") @db.Uuid
   sourceGroupEmail String            @map("source_group_email")
-  targetMailboxId  String            @map("target_mailbox_id") @db.Uuid
+  targetMailboxId  String?           @map("target_mailbox_id") @db.Uuid
   targetEmail      String            @map("target_email")
+  direction        String            @default("GOOGLE_TO_MICROSOFT")
+  scope            String            @default("USERS")
+  status           String            @default("PENDING")
+  selectedTypes    String            @default("EMAILS,CALENDARS,CONTACTS,RULES,TAGS") @map("selected_types")
+  analysisResult   Json              @default("{}") @map("analysis_result")
   confidence       String            @default("MANUAL") // EXACT, ALIAS, MANUAL, NONE
   isConfirmed      Boolean           @default(false) @map("is_confirmed")
   confirmedBy      String?           @map("confirmed_by")
@@ -486,10 +495,9 @@ model MigrationMapping {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
-  sourceGroup      GoogleGroup       @relation(fields: [sourceGroupId], references: [id], onDelete: Cascade)
-  targetMailbox    MicrosoftMailbox  @relation(fields: [targetMailboxId], references: [id], onDelete: Cascade)
+  sourceGroup      GoogleGroup?      @relation(fields: [sourceGroupId], references: [id], onDelete: Cascade)
+  targetMailbox    MicrosoftMailbox? @relation(fields: [targetMailboxId], references: [id], onDelete: Cascade)
 
-  @@unique([sourceGroupId, targetMailboxId])
   @@index([sourceGroupEmail])
   @@index([targetEmail])
   @@map("migration_mappings")
@@ -497,6 +505,10 @@ model MigrationMapping {
 
 model MigrationJob {
   id                    String            @id @default(uuid()) @db.Uuid
+  direction             String            @default("GOOGLE_TO_MICROSOFT")
+  scope                 String            @default("USERS")
+  selectedTypes         String            @default("EMAILS,CALENDARS,CONTACTS,RULES,TAGS") @map("selected_types")
+  analysisResult        Json              @default("{}") @map("analysis_result")
   sourceGroupId         String?           @map("source_group_id") @db.Uuid
   sourceGroupEmail      String            @map("source_group_email")
   targetMailboxId       String?           @map("target_mailbox_id") @db.Uuid

@@ -92,7 +92,7 @@ export const AppSwal = {
 
     return Swal.fire({
       buttonsStyling: false,
-      backdrop: isToast ? false : "transparent",
+      backdrop: isToast ? false : (dark ? "rgba(0, 0, 0, 0.72)" : "rgba(15, 23, 42, 0.5)"),
       ...theme,
       ...opts,
       customClass: {

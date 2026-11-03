@@ -45,6 +45,12 @@ export const mainWorker = new Worker(
           break;
         }
 
+        case "GOOGLE_CHAT_SYNC": {
+          const { googleChatSyncService } = await import("./lib/google/chat-sync.service");
+          await googleChatSyncService.syncUserChat(payload.targetEmail, payload.actorUserId);
+          break;
+        }
+
         case "GOOGLE_VAULT_CREATE_EXPORT": {
           await googleVaultService.createExport({
             backupRequestId: payload.backupRequestId,

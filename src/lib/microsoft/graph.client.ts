@@ -67,7 +67,12 @@ export class MicrosoftGraphClient {
       throw new Error(`Erro na API Microsoft Graph (${res.status} ${res.statusText}): ${errText}`);
     }
 
-    return res.json() as Promise<T>;
+    if (res.status === 202 || res.status === 204) {
+      return {} as T;
+    }
+
+    const text = await res.text();
+    return text ? (JSON.parse(text) as T) : ({} as T);
   }
 
   public resetToken(): void {

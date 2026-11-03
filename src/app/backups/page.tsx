@@ -23,6 +23,7 @@ export default function BackupsPage() {
   const [total, setTotal] = useState(0);
   const [totalStorageBytes, setTotalStorageBytes] = useState("0");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [serviceFilter, setServiceFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -43,11 +44,13 @@ export default function BackupsPage() {
   // Backup Details Modal
   const [selectedBackup, setSelectedBackup] = useState<any | null>(null);
 
+  const totalPages = Math.ceil(total / pageSize) || 1;
+
   const fetchBackups = async () => {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/backups?page=${page}&limit=20&serviceType=${serviceFilter}&status=${statusFilter}&search=${encodeURIComponent(search)}`
+        `/api/backups?page=${page}&limit=${pageSize}&serviceType=${serviceFilter}&status=${statusFilter}&search=${encodeURIComponent(search)}`
       );
       if (res.ok) {
         const data = await res.json();
@@ -64,7 +67,7 @@ export default function BackupsPage() {
 
   useEffect(() => {
     fetchBackups();
-  }, [page, serviceFilter, statusFilter, search]);
+  }, [page, pageSize, serviceFilter, statusFilter, search]);
 
   const handleImportLocal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,14 +244,20 @@ export default function BackupsPage() {
               type="text"
               placeholder="Pesquisar por email..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-[#e95c0c]"
             />
           </div>
 
           <select
             value={serviceFilter}
-            onChange={(e) => setServiceFilter(e.target.value)}
+            onChange={(e) => {
+              setServiceFilter(e.target.value);
+              setPage(1);
+            }}
             className="p-1.5 border border-slate-200 rounded-lg bg-white font-medium"
           >
             <option value="ALL">Todos os Serviços</option>
@@ -259,7 +268,10 @@ export default function BackupsPage() {
 
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="p-1.5 border border-slate-200 rounded-lg bg-white font-medium"
           >
             <option value="ALL">Todos os Estados</option>
@@ -400,6 +412,59 @@ export default function BackupsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Bar */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="text-slate-500 dark:text-slate-400">
+            A exibir <span className="font-bold text-slate-800 dark:text-slate-200">{backups.length}</span> de{" "}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{total}</span> backups registados
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Linhas por página:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-md text-xs font-bold focus:outline-hidden focus:border-[#e95c0c]"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            {/* Page Buttons (if multiple pages) */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-40 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                <span className="px-2 text-slate-600 dark:text-slate-400 font-bold">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-40 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Seguinte
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

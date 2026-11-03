@@ -11,6 +11,69 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // 1. Handle Exit Simulation (restore original Admin session)
+    if (body.exitSimulation) {
+      const current = await getCurrentUser(req);
+      let adminUser = null;
+
+      if (current?.impersonator?.userId) {
+        adminUser = await prisma.appUser.findUnique({
+          where: { id: current.impersonator.userId },
+        });
+      }
+
+      if (!adminUser || !adminUser.isActive) {
+        adminUser = await prisma.appUser.findFirst({
+          where: { role: "ADMIN", isActive: true },
+        });
+      }
+
+      if (!adminUser) {
+        adminUser = await prisma.appUser.findFirst({
+          where: { role: "ADMIN" },
+        });
+      }
+
+      if (!adminUser) {
+        return NextResponse.json(
+          { error: "Nenhuma conta de Administrador encontrada para restaurar." },
+          { status: 404 }
+        );
+      }
+
+      const token = createSessionToken({
+        userId: adminUser.id,
+        email: adminUser.email,
+        role: adminUser.role as any,
+        displayName: adminUser.displayName,
+      });
+
+      await logAudit({
+        actorUserId: adminUser.id,
+        action: "SIMULATION_END",
+        entityType: "USER",
+        entityId: current?.userId || adminUser.id,
+        metadata: {
+          previousSimulatedUserId: current?.userId,
+          previousSimulatedEmail: current?.email,
+        },
+        ipAddress: req.headers.get("x-forwarded-for") || req.ip || "127.0.0.1",
+        userAgent: req.headers.get("user-agent") || undefined,
+      });
+
+      const res = NextResponse.json({ success: true, restored: true, user: adminUser });
+      res.cookies.set(SESSION_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+      return res;
+    }
+
+    // 2. Handle User Simulation or Standard Login
     const { email } = body;
 
     if (!email) {
@@ -28,23 +91,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const caller = await getCurrentUser(req);
+    const isSimulating = Boolean(body.simulate || caller?.role === "ADMIN" || caller?.isSimulated);
+
+    let impersonator = caller?.impersonator;
+    if (isSimulating && !impersonator && caller) {
+      impersonator = {
+        userId: caller.userId,
+        email: caller.email,
+        role: caller.role,
+        displayName: caller.displayName,
+      };
+    }
+
+    // If caller is switching back to the impersonator account itself, remove simulation flag
+    if (impersonator && appUser.id === impersonator.userId) {
+      impersonator = undefined;
+    }
+
     const token = createSessionToken({
       userId: appUser.id,
       email: appUser.email,
       role: appUser.role as any,
       displayName: appUser.displayName,
+      isSimulated: !!impersonator,
+      impersonator: impersonator,
     });
 
     await logAudit({
-      actorUserId: appUser.id,
-      action: "LOGIN",
+      actorUserId: impersonator ? impersonator.userId : appUser.id,
+      action: impersonator ? "SIMULATION_START" : "LOGIN",
       entityType: "USER",
       entityId: appUser.id,
+      metadata: impersonator
+        ? {
+            impersonatedBy: impersonator.email,
+            targetUser: appUser.email,
+          }
+        : undefined,
       ipAddress: req.headers.get("x-forwarded-for") || req.ip || "127.0.0.1",
       userAgent: req.headers.get("user-agent") || undefined,
     });
 
-    const res = NextResponse.json({ success: true, user: appUser });
+    const res = NextResponse.json({
+      success: true,
+      user: {
+        ...appUser,
+        isSimulated: !!impersonator,
+        impersonator,
+      },
+    });
+
     res.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

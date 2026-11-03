@@ -4,24 +4,164 @@
 
 @import "sweetalert2/dist/sweetalert2.min.css";
 
+/* =================================================================== */
+/* TITILLIUM FONT-FACE DEFINITIONS                                     */
+/* =================================================================== */
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-ThinItalic.otf') format('opentype');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-SemiboldItalic.otf') format('opentype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium';
+  src: url('/fonts/Titillium-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Also alias Titillium Web to Titillium offline fonts */
+@font-face {
+  font-family: 'Titillium Web';
+  src: url('/fonts/Titillium-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium Web';
+  src: url('/fonts/Titillium-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium Web';
+  src: url('/fonts/Titillium-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Titillium Web';
+  src: url('/fonts/Titillium-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Base Root Font Size: +2px system-wide (16px -> 18px base) */
 html {
   font-size: 18px !important;
   scroll-behavior: smooth;
+  font-family: var(--font-titillium), 'Titillium', 'Titillium Web', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 :root {
   --color-navy: #223546;
   --color-orange: #e95c0c;
   --color-blue: #184e8e;
+  --font-heading: var(--font-titillium), 'Titillium', 'Titillium Web', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--font-titillium), 'Titillium', 'Titillium Web', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
   font-size: 1rem;
   color: #1e293b;
   background: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-titillium), 'Titillium', 'Titillium Web', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6,
+.font-heading,
+.font-title {
+  font-family: var(--font-heading) !important;
+}
+
+.font-black {
+  font-weight: 600 !important;
+}
+
+.font-extrabold {
+  font-weight: 600 !important;
+}
+
+.font-bold {
+  font-weight: 600 !important;
+}
+
+input, button, select, textarea, .swal2-popup {
+  font-family: var(--font-titillium), 'Titillium', 'Titillium Web', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
 /* Custom scrollbars */
@@ -178,19 +318,31 @@ body {
 }
 
 /* =================================================================== */
-/* SWEETALERT2: TRANSPARENT BACKDROP & LIGHT MODE AS UNIVERSAL DEFAULT */
+/* SWEETALERT2: MODAL BACKDROP & FLOATING TOASTS                       */
 /* =================================================================== */
 .swal2-container {
+  z-index: 999999 !important;
+}
+
+/* Modal backdrop covers entire screen with smooth dimming and blur */
+.swal2-container.swal2-backdrop-show {
+  background: rgba(15, 23, 42, 0.72) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+/* Toasts never have a dark backdrop and do not block user clicks */
+.swal2-container.swal2-no-backdrop,
+.swal2-container:has(.swal2-toast) {
   background: transparent !important;
   background-color: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  z-index: 99999 !important;
+  pointer-events: none !important;
 }
 
-.swal2-backdrop-show {
-  background: transparent !important;
-  background-color: transparent !important;
+.swal2-container:has(.swal2-toast) .swal2-toast {
+  pointer-events: auto !important;
 }
 
 .swal2-timer-progress-bar {
@@ -223,8 +375,18 @@ body {
 
 .swal2-title {
   color: #0f172a !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   font-size: 1.25rem !important;
+}
+
+/* General alert titles font-weight 600 */
+.alert-title,
+[role="alert"] h1,
+[role="alert"] h2,
+[role="alert"] h3,
+[role="alert"] h4,
+[role="alert"] strong {
+  font-weight: 600 !important;
 }
 
 .swal2-html-container {
@@ -268,6 +430,7 @@ html.dark .swal2-popup.swal2-toast {
 
 html.dark .swal2-title {
   color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
 html.dark .swal2-html-container {

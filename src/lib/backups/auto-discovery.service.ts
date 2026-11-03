@@ -178,6 +178,35 @@ export class BackupAutoDiscoveryService {
       }
     }
 
+    // 4. Scan Google Chat exports: m365_old/GoogleChatExport
+    const chatExportRoot = "C:/Users/andre.gabry/Projects/m365/m365_old/GoogleChatExport";
+    if (fs.existsSync(chatExportRoot)) {
+      try {
+        const files = await fsp.readdir(chatExportRoot, { withFileTypes: true });
+        for (const f of files) {
+          if (f.isFile() && f.name.toLowerCase().endsWith(".zip") && f.name.toLowerCase().includes("chat")) {
+            const s = await fsp.stat(path.join(chatExportRoot, f.name));
+            let entityEmail = "andre.gabry@enging.pt";
+            if (f.name.includes("@")) {
+              const match = f.name.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z]+)/);
+              if (match) entityEmail = match[1];
+            }
+            discovered.push({
+              entityEmail: entityEmail.toLowerCase(),
+              entityType: "GOOGLE_USER",
+              serviceType: "GOOGLE_CHAT",
+              format: "ZIP",
+              filePath: path.join(chatExportRoot, f.name),
+              filename: f.name,
+              bytes: s.size,
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao varrer backups do Google Chat:", err);
+      }
+    }
+
     return discovered;
   }
 
@@ -246,24 +275,48 @@ export class BackupAutoDiscoveryService {
         continue;
       }
 
-      // Create BackupRequest
-      const backupReq = await prisma.backupRequest.create({
-        data: {
-          entityType: item.entityType,
-          entityId: googleGroupId || googleUserId || null,
-          googleGroupId: googleGroupId,
-          googleUserId: googleUserId,
+      // Check if there is an existing backup request for this entity & service without artifacts
+      let backupReq = await prisma.backupRequest.findFirst({
+        where: {
           entityEmail: item.entityEmail,
           serviceType: item.serviceType,
-          format: item.format,
-          status: "READY",
-          requestedBy: "auto-discovery",
-          criteria: {
-            importedFrom: item.filePath,
-            discoveredAt: new Date().toISOString(),
-          },
         },
+        include: { artifacts: true },
       });
+
+      if (!backupReq) {
+        backupReq = await prisma.backupRequest.create({
+          data: {
+            entityType: item.entityType,
+            entityId: googleGroupId || googleUserId || null,
+            googleGroupId: googleGroupId,
+            googleUserId: googleUserId,
+            entityEmail: item.entityEmail,
+            serviceType: item.serviceType,
+            format: item.format,
+            status: "READY",
+            requestedBy: "auto-discovery",
+            criteria: {
+              importedFrom: item.filePath,
+              discoveredAt: new Date().toISOString(),
+            },
+          },
+          include: { artifacts: true },
+        });
+      } else {
+        await prisma.backupRequest.update({
+          where: { id: backupReq.id },
+          data: {
+            format: item.format,
+            status: "READY",
+            criteria: {
+              ...(backupReq.criteria as any || {}),
+              importedFrom: item.filePath,
+              discoveredAt: new Date().toISOString(),
+            },
+          },
+        });
+      }
 
       // Quick hash calculation (or dummy for huge files if needed)
       let sha256 = "sha256-pending";
@@ -331,6 +384,10 @@ export class BackupAutoDiscoveryService {
     });
 
     for (const or of orphanedRequests) {
+      const hasArtifacts = await prisma.backupArtifact.count({
+        where: { backupRequestId: or.id },
+      });
+
       if (or.entityType === "GOOGLE_GROUP") {
         const group = await prisma.googleGroup.findUnique({
           where: { email: or.entityEmail },
@@ -341,7 +398,7 @@ export class BackupAutoDiscoveryService {
             data: {
               googleGroupId: group.id,
               entityId: group.id,
-              status: "READY",
+              ...(hasArtifacts > 0 ? { status: "READY" } : {}),
             },
           });
           updatedCount++;
@@ -356,7 +413,7 @@ export class BackupAutoDiscoveryService {
             data: {
               googleUserId: user.id,
               entityId: user.id,
-              status: "READY",
+              ...(hasArtifacts > 0 ? { status: "READY" } : {}),
             },
           });
           updatedCount++;

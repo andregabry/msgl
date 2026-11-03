@@ -29,11 +29,17 @@ service-account.json
 oauth2service.json
 client_secrets.json
 Microsoft-API.txt
+scratch*
+src/app/migration/check_*.py
+src/app/migration/test_*.py
 
 # Dados e Bases Locais de Execucao
 *.pst
 *.mbox
 *.zip
+*.tar
+*.tar.gz
+*.dump
 *.log
 AzCopy*.log
 *.steV2

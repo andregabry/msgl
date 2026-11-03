@@ -28,6 +28,18 @@ export async function GET(
                 files: true,
               },
             },
+            chatArchives: {
+              include: {
+                spaces: {
+                  include: {
+                    _count: {
+                      select: { messages: true },
+                    },
+                  },
+                  orderBy: { displayName: "asc" },
+                },
+              },
+            },
             events: {
               orderBy: { createdAt: "asc" },
             },

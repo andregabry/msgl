@@ -7,18 +7,32 @@ export async function POST(req: NextRequest) {
     const user = await requireAuth(req, "migration:prepare");
     const body = await req.json();
 
-    const { groupEmail, targetMailboxEmail } = body;
+    const {
+      direction = "GOOGLE_TO_MICROSOFT",
+      scope = "USERS",
+      sourceEmail,
+      targetEmail,
+      groupEmail,
+      targetMailboxEmail,
+      selectedTypes = ["EMAILS", "CALENDARS", "CONTACTS", "RULES", "TAGS"],
+    } = body;
 
-    if (!groupEmail || !targetMailboxEmail) {
+    const effectiveSource = (sourceEmail || groupEmail || "").trim();
+    const effectiveTarget = (targetEmail || targetMailboxEmail || "").trim();
+
+    if (!effectiveSource || !effectiveTarget) {
       return NextResponse.json(
-        { error: "Parâmetros obrigatórios: groupEmail, targetMailboxEmail." },
+        { error: "Parâmetros obrigatórios em falta: conta de origem e conta de destino." },
         { status: 400 }
       );
     }
 
     const { job, prepResult } = await migrationService.createAndPrepareJob(
-      groupEmail,
-      targetMailboxEmail,
+      effectiveSource,
+      effectiveTarget,
+      direction,
+      scope,
+      selectedTypes,
       user.userId
     );
 

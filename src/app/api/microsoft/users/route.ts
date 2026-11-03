@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, serializeBigInt } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/session";
 import { microsoftDirectoryService } from "@/lib/microsoft/directory.service";
+import { backupDownloadService } from "@/lib/backups/backup-download.service";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,8 +11,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "25", 10);
-    const skip = (page - 1) * limit;
+    const limitParam = searchParams.get("limit");
+    const isAll = limitParam === "all" || limitParam === "-1" || searchParams.get("all") === "true";
+    const limit = isAll ? 1000 : parseInt(limitParam || "25", 10);
+    const skip = isAll ? 0 : (page - 1) * limit;
 
     const where: any = {};
     if (search.trim() !== "") {
@@ -28,9 +31,83 @@ export async function GET(req: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { userPrincipalName: "asc" },
+        orderBy: { displayName: "asc" },
       }),
     ]);
+
+    // Gather all candidate emails for this page
+    const allEmails = users.flatMap((u) => [u.userPrincipalName, u.mail].filter(Boolean) as string[]);
+
+    // Find linked app users
+    const appUsers = allEmails.length > 0
+      ? await prisma.appUser.findMany({
+          where: {
+            email: {
+              in: allEmails.map((e) => e.toLowerCase()),
+              mode: "insensitive",
+            },
+          },
+          select: { id: true, email: true, role: true, displayName: true, isActive: true },
+        })
+      : [];
+
+    const appUserMap = new Map(appUsers.map((a) => [a.email.toLowerCase(), a]));
+
+    // Find linked mailboxes
+    const mailboxes = allEmails.length > 0
+      ? await prisma.microsoftMailbox.findMany({
+          where: {
+            primarySmtpAddress: {
+              in: allEmails.map((e) => e.toLowerCase()),
+              mode: "insensitive",
+            },
+          },
+          select: { id: true, primarySmtpAddress: true, recipientType: true, archiveEnabled: true },
+        })
+      : [];
+
+    const mailboxMap = new Map(mailboxes.map((m) => [m.primarySmtpAddress.toLowerCase(), m]));
+
+    // Find backup requests
+    const backups = allEmails.length > 0
+      ? await prisma.backupRequest.findMany({
+          where: {
+            entityEmail: {
+              in: allEmails.map((e) => e.toLowerCase()),
+              mode: "insensitive",
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          include: {
+            artifacts: true,
+          },
+        })
+      : [];
+
+    const backupMap = new Map<string, any[]>();
+    backups.forEach((b) => {
+      const email = b.entityEmail.toLowerCase();
+      const list = backupMap.get(email) || [];
+      list.push({
+        ...b,
+        isDownloaded: backupDownloadService.getBackupStatus(b).isDownloaded,
+      });
+      backupMap.set(email, list);
+    });
+
+    const enrichedUsers = users.map((u) => {
+      const candidates = [u.userPrincipalName, u.mail].filter(Boolean).map((e) => (e as string).toLowerCase());
+      const linkedAppUser = candidates.map((e) => appUserMap.get(e)).find(Boolean) || null;
+      const linkedMailbox = candidates.map((e) => mailboxMap.get(e)).find(Boolean) || null;
+      const userBackups = candidates.flatMap((e) => backupMap.get(e) || []);
+
+      return {
+        ...u,
+        appUser: linkedAppUser,
+        mailbox: linkedMailbox,
+        backupRequests: userBackups,
+      };
+    });
 
     return NextResponse.json(
       serializeBigInt({
@@ -38,7 +115,7 @@ export async function GET(req: NextRequest) {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-        users,
+        users: enrichedUsers,
       })
     );
   } catch (err: any) {

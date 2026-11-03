@@ -132,7 +132,26 @@ export class BackupDownloadService {
 
     let artifact = backupReq.artifacts[0];
     if (!artifact) {
-      throw new Error("Nenhum artefacto de exportação associado a este backup.");
+      if (backupReq.serviceType === "GOOGLE_CHAT") {
+        const { googleChatSyncService } = await import("../google/chat-sync.service");
+        const syncRes = await googleChatSyncService.syncUserChat(backupReq.entityEmail, actorUserId);
+        const userStorageDir = path.join(APP_STORAGE_ROOT, "google_chat", backupReq.entityEmail.toLowerCase());
+        const exportFile = path.join(userStorageDir, `google-chat-${backupReq.entityEmail.toLowerCase()}-export.json`);
+        let bytes = 0;
+        try {
+          bytes = fs.statSync(exportFile).size;
+        } catch {}
+
+        return {
+          success: true,
+          isDownloaded: true,
+          localPath: exportFile,
+          bytes,
+          filename: path.basename(exportFile),
+          message: syncRes.message,
+        };
+      }
+      throw new Error("Este backup ainda está a aguardar a conclusão da exportação no Google Vault. O ficheiro de exportação ainda não se encontra disponível para download.");
     }
 
     const filename = artifact.originalFilename || artifact.storedFilename || `backup-${backupReq.id}.${backupReq.format.toLowerCase()}`;
@@ -164,6 +183,25 @@ export class BackupDownloadService {
       // Stream/copy source file into the app's internal storage directory
       await fsp.copyFile(sourcePath, targetPath);
     } else if (!sourcePath) {
+      if (backupReq.serviceType === "GOOGLE_CHAT") {
+        const { googleChatSyncService } = await import("../google/chat-sync.service");
+        const syncRes = await googleChatSyncService.syncUserChat(backupReq.entityEmail, actorUserId);
+        const userStorageDir = path.join(APP_STORAGE_ROOT, "google_chat", backupReq.entityEmail.toLowerCase());
+        const exportFile = path.join(userStorageDir, `google-chat-${backupReq.entityEmail.toLowerCase()}-export.json`);
+        let bytes = 0;
+        try {
+          bytes = fs.statSync(exportFile).size;
+        } catch {}
+
+        return {
+          success: true,
+          isDownloaded: true,
+          localPath: exportFile,
+          bytes,
+          filename: path.basename(exportFile),
+          message: syncRes.message,
+        };
+      }
       throw new Error("Ficheiro de origem não encontrado no disco para download.");
     }
 

@@ -11,8 +11,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "25", 10);
-    const skip = (page - 1) * limit;
+    const limitParam = searchParams.get("limit");
+    const isAll = limitParam === "all" || limitParam === "-1";
+    const limit = isAll ? 1000 : parseInt(limitParam || "100", 10);
+    const skip = isAll ? 0 : (page - 1) * limit;
 
     const where: any = {};
     if (search.trim() !== "") {

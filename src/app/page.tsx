@@ -217,13 +217,15 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <Link
-            href="/chat/meus-chats"
+          <a
+            href="https://googlechat.enging.pt"
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600 hover:underline"
           >
-            <span>Consultar Meus Chats</span>
+            <span>Aceder ao Portal Google Chat</span>
             <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
+          </a>
         </div>
 
         {/* Card 4: Microsoft 365 */}

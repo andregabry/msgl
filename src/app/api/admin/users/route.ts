@@ -18,7 +18,15 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ users });
+    const sanitizedUsers = users.map((u) => {
+      const { passwordHash, ...rest } = u;
+      return {
+        ...rest,
+        hasPassword: !!passwordHash,
+      };
+    });
+
+    return NextResponse.json({ users: sanitizedUsers });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 401 });
   }
@@ -42,18 +50,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Função inválida. Válidas: ${validRoles.join(", ")}` }, { status: 400 });
     }
 
+    let passwordUpdate: any = {};
+    if (body.password && typeof body.password === "string" && body.password.trim().length >= 6) {
+      const { hashPassword } = await import("@/lib/auth/password");
+      passwordUpdate.passwordHash = hashPassword(body.password.trim());
+      passwordUpdate.mustChangePassword = false;
+    }
+
+    let systemAccess = body.systemAccess;
+    if (!systemAccess) {
+      if (role === "ADMIN") systemAccess = "BOTH";
+      else if (role === "USER") systemAccess = "CHAT_PORTAL";
+      else systemAccess = "MSGL";
+    }
+
     const user = await prisma.appUser.upsert({
       where: { email: email.toLowerCase() },
       update: {
         displayName,
         role: role as any,
+        systemAccess,
         isActive: true,
+        ...passwordUpdate,
       },
       create: {
         email: email.toLowerCase(),
         displayName,
         role: role as any,
+        systemAccess,
         isActive: true,
+        ...passwordUpdate,
       },
     });
 

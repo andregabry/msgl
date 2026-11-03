@@ -125,16 +125,25 @@ export async function POST(req: NextRequest) {
       metadata: { entityEmail, serviceType, format },
     });
 
-    // Enqueue Vault creation job
-    await enqueueJob("backupQueue", "GOOGLE_VAULT_CREATE_EXPORT", {
-      backupRequestId: backupReq.id,
-      serviceType,
-      targetEmail: entityEmail.toLowerCase(),
-      format,
-      dateRangeStart,
-      dateRangeEnd,
-      actorUserId: user.userId,
-    });
+    // Enqueue job based on service type
+    if (serviceType === "GOOGLE_CHAT") {
+      await enqueueJob("backupQueue", "GOOGLE_CHAT_SYNC", {
+        backupRequestId: backupReq.id,
+        targetEmail: entityEmail.toLowerCase(),
+        actorUserId: user.userId,
+      });
+    } else {
+      // Enqueue Vault creation job
+      await enqueueJob("backupQueue", "GOOGLE_VAULT_CREATE_EXPORT", {
+        backupRequestId: backupReq.id,
+        serviceType,
+        targetEmail: entityEmail.toLowerCase(),
+        format,
+        dateRangeStart,
+        dateRangeEnd,
+        actorUserId: user.userId,
+      });
+    }
 
     return NextResponse.json({ success: true, backupRequest: backupReq });
   } catch (err: any) {

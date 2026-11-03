@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../prisma";
 import { AppRole, Permission, hasPermission } from "./rbac";
 
+import { isGestor } from "./password";
+
 const SESSION_COOKIE_NAME = "migrate_session";
 const SESSION_SECRET = process.env.SESSION_SECRET || "default_development_secret_do_not_use_in_prod";
 
@@ -11,6 +13,16 @@ export interface SessionPayload {
   email: string;
   role: AppRole;
   displayName: string;
+  isSimulated?: boolean;
+  mustChangePassword?: boolean;
+  systemAccess?: string;
+  isGestor?: boolean;
+  impersonator?: {
+    userId: string;
+    email: string;
+    role: AppRole;
+    displayName: string;
+  };
 }
 
 export function createSessionToken(payload: SessionPayload): string {
@@ -44,39 +56,35 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionPayload 
       // Validate user is still active in database
       const user = await prisma.appUser.findUnique({
         where: { id: payload.userId },
-        select: { id: true, email: true, role: true, displayName: true, isActive: true },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          displayName: true,
+          isActive: true,
+          mustChangePassword: true,
+          systemAccess: true,
+        },
       });
       if (user && user.isActive) {
+        const gestor = isGestor(user);
         return {
           userId: user.id,
           email: user.email,
           role: user.role as AppRole,
           displayName: user.displayName,
+          mustChangePassword: user.mustChangePassword,
+          systemAccess: user.systemAccess,
+          isGestor: gestor,
+          isSimulated: payload.isSimulated || !!payload.impersonator,
+          impersonator: payload.impersonator,
         };
       }
     }
   }
 
-  // Seamless internal platform fallback: ensure default admin exists and can be resolved
-  let admin = await prisma.appUser.findFirst({
-    where: { role: "ADMIN" },
-  });
-  if (!admin) {
-    admin = await prisma.appUser.create({
-      data: {
-        email: "andre.gabry@dynamox.net",
-        displayName: "André Gabry (Admin)",
-        role: "ADMIN",
-        isActive: true,
-      },
-    });
-  }
-  return {
-    userId: admin.id,
-    email: admin.email,
-    role: admin.role as AppRole,
-    displayName: admin.displayName,
-  };
+  // Return null when unauthenticated so login is required
+  return null;
 }
 
 export async function requireAuth(req: NextRequest, permission?: Permission): Promise<SessionPayload> {
@@ -90,6 +98,12 @@ export async function requireAuth(req: NextRequest, permission?: Permission): Pr
   }
 
   return user;
+}
+
+export function requireGestor(user: SessionPayload): void {
+  if (!user.isGestor) {
+    throw new Error("Acesso restrito. Este sistema requer privilégios de gestor.");
+  }
 }
 
 export { SESSION_COOKIE_NAME };

@@ -5,9 +5,21 @@ module.exports = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-titillium)', 'Titillium', 'Titillium Web', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['var(--font-titillium)', 'Titillium', 'Titillium Web', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['var(--font-titillium)', 'Titillium', 'Titillium Web', 'system-ui', '-apple-system', 'sans-serif'],
+        titillium: ['var(--font-titillium)', 'Titillium', 'Titillium Web', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      fontWeight: {
+        bold: '600',
+        extrabold: '600',
+        black: '600',
+      },
       colors: {
         enging: {
           navy: '#223546',
