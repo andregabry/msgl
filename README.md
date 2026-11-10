@@ -1,5 +1,9 @@
 # Sistema de Migração: Google Groups → Microsoft 365
 
+## Visão geral para o portefólio
+
+Ferramenta de migração e auditoria de mensagens do Google Groups para Microsoft 365. O painel web coordena rotinas em Python e PowerShell. Para demonstrações, use apenas dados sintéticos.
+
 Repositório oficial e centralizado da aplicação de migração e auditoria de Google Groups para caixas compartilhadas e de usuário no Microsoft 365.
 
 ---
