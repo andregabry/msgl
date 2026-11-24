@@ -28,6 +28,7 @@ import {
   X,
   Eye,
   SlidersHorizontal,
+  AlertCircle,
 } from "lucide-react";
 import { toast, dialog, showLoading, hideLoading, confirmAction } from "@/lib/swal";
 import GoogleChatAuth from "@/components/GoogleChatAuth";
@@ -114,7 +115,19 @@ export default function GoogleChatPortalPage() {
       const res = await fetch("/api/auth/session");
       if (res.ok) {
         const d = await res.json();
-        setCurrentUser(d.user || null);
+        const u = d.user || null;
+        setCurrentUser(u);
+        if (u) {
+          const allowDms = u.chatAllowDms !== false;
+          const allowSpaces = u.chatAllowSpaces !== false;
+          if (allowDms && !allowSpaces) {
+            setSpaceFilter("DIRECT_MESSAGE");
+          } else if (!allowDms && allowSpaces) {
+            setSpaceFilter("SPACE");
+          } else {
+            setSpaceFilter("ALL");
+          }
+        }
       } else {
         setCurrentUser(null);
       }
@@ -185,8 +198,15 @@ export default function GoogleChatPortalPage() {
         const data = await res.json();
         const list = data.spaces || [];
         setSpaces(list);
-        if (list.length > 0 && !selectedSpace) {
-          setSelectedSpace(list[0]);
+        if (list.length > 0) {
+          setSelectedSpace((prev: any) => {
+            if (prev && list.some((item: any) => item.id === prev.id)) {
+              return prev;
+            }
+            return list[0];
+          });
+        } else {
+          setSelectedSpace(null);
         }
       }
     } catch (err) {
@@ -488,6 +508,9 @@ export default function GoogleChatPortalPage() {
     }
   }, [selectedSpace, startDate, endDate, conversationSearchActive, sortOrder]);
 
+  const canAccessDms = currentUser?.chatAllowDms !== false;
+  const canAccessSpaces = currentUser?.chatAllowSpaces !== false;
+
   const filteredSpaces = spaces.filter((s) => {
     if (spaceFilter !== "ALL" && s.spaceType !== spaceFilter) return false;
     if (spaceSearch.trim() && !s.displayName?.toLowerCase().includes(spaceSearch.toLowerCase())) {
@@ -732,38 +755,63 @@ export default function GoogleChatPortalPage() {
           {/* --------------------------------------------------------------- */}
           <div className="w-full md:w-80 lg:w-96 h-full border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-50/60 dark:bg-[#121921]/60 overflow-hidden shrink-0">
             {/* Filter by Space Type */}
-            <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => setSpaceFilter("ALL")}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center ${
-                  spaceFilter === "ALL"
-                    ? "bg-[#e95c0c] text-white shadow-xs"
-                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                Todas ({spaces.length})
-              </button>
-              <button
-                onClick={() => setSpaceFilter("DIRECT_MESSAGE")}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center ${
-                  spaceFilter === "DIRECT_MESSAGE"
-                    ? "bg-[#e95c0c] text-white shadow-xs"
-                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                Diretas (DMs)
-              </button>
-              <button
-                onClick={() => setSpaceFilter("SPACE")}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center ${
-                  spaceFilter === "SPACE"
-                    ? "bg-[#e95c0c] text-white shadow-xs"
-                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                Espaços / Canais
-              </button>
-            </div>
+            {canAccessDms && canAccessSpaces ? (
+              <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setSpaceFilter("ALL")}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center ${
+                    spaceFilter === "ALL"
+                      ? "bg-[#e95c0c] text-white shadow-xs"
+                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  Todas ({spaces.length})
+                </button>
+                <button
+                  onClick={() => setSpaceFilter("DIRECT_MESSAGE")}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center ${
+                    spaceFilter === "DIRECT_MESSAGE"
+                      ? "bg-[#e95c0c] text-white shadow-xs"
+                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  Diretas (DMs)
+                </button>
+                <button
+                  onClick={() => setSpaceFilter("SPACE")}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition text-center ${
+                    spaceFilter === "SPACE"
+                      ? "bg-[#e95c0c] text-white shadow-xs"
+                      : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  Espaços / Canais
+                </button>
+              </div>
+            ) : canAccessDms ? (
+              <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] flex items-center justify-between shrink-0">
+                <span className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-blue-500" /> Mensagens Diretas (DMs)
+                </span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                  {spaces.length} conversas
+                </span>
+              </div>
+            ) : canAccessSpaces ? (
+              <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202c] flex items-center justify-between shrink-0">
+                <span className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Hash className="w-3.5 h-3.5 text-teal-500" /> Espaços & Canais de Equipa
+                </span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                  {spaces.length} salas
+                </span>
+              </div>
+            ) : (
+              <div className="p-3 border-b border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs font-bold shrink-0 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                <span>Acesso a conversas restrito pelo administrador</span>
+              </div>
+            )}
 
             {/* Quick Filter Box */}
             <div className="p-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
@@ -781,7 +829,19 @@ export default function GoogleChatPortalPage() {
 
             {/* Conversations List */}
             <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
-              {loadingSpaces ? (
+              {!canAccessDms && !canAccessSpaces ? (
+                <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-xs">
+                    <ShieldAlert className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-bold text-slate-800 dark:text-slate-100">Acesso Restrito</p>
+                    <p className="text-[11px] leading-relaxed max-w-xs mx-auto text-slate-500 dark:text-slate-400">
+                      O seu perfil tem restrição ativa para mensagens diretas e espaços. Para solicitar acesso, contacte o administrador do sistema.
+                    </p>
+                  </div>
+                </div>
+              ) : loadingSpaces ? (
                 <div className="p-8 text-center text-xs text-slate-400">
                   <div className="animate-spin w-5 h-5 border-2 border-[#e95c0c] border-t-transparent rounded-full mx-auto mb-2" />
                   A carregar conversas arquivadas...
@@ -1267,6 +1327,18 @@ export default function GoogleChatPortalPage() {
                   )}
                 </div>
               </>
+            ) : !canAccessDms && !canAccessSpaces ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/40 dark:bg-[#121921]/40">
+                <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4 shadow-xs">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <h3 className="text-base font-black text-slate-800 dark:text-slate-100">
+                  Visualização de Chat Restrita
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
+                  As permissões da sua conta para visualização de <strong>Mensagens Diretas</strong> e <strong>Espaços de Equipa</strong> estão desativadas pelo Administrador.
+                </p>
+              </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center mb-4 border border-teal-500/20">

@@ -134,9 +134,17 @@ export class ChatQueryService {
   public async getUserSpaces(appUserId: string, _role?: string) {
     const appUser = await prisma.appUser.findUnique({
       where: { id: appUserId },
-      select: { id: true, email: true, displayName: true },
+      select: { id: true, email: true, displayName: true, chatAllowDms: true, chatAllowSpaces: true },
     });
     if (!appUser) return [];
+
+    const allowDms = appUser.chatAllowDms ?? true;
+    const allowSpaces = appUser.chatAllowSpaces ?? true;
+
+    // If both DMs and Spaces are disabled, return empty list immediately
+    if (!allowDms && !allowSpaces) {
+      return [];
+    }
 
     const userEmail = appUser.email.toLowerCase();
     const userName = appUser.displayName.toLowerCase();
@@ -147,8 +155,23 @@ export class ChatQueryService {
     // STRICT ISOLATION: Always filter spaces belonging to this user account only
     const authorizedWhere = this.getAuthorizedSpaceWhere(appUserId, userEmail, appUser.displayName);
 
+    // Filter by spaceType based on granular permissions
+    let typeFilter: any = undefined;
+    if (allowDms && !allowSpaces) {
+      typeFilter = { equals: "DIRECT_MESSAGE" };
+    } else if (!allowDms && allowSpaces) {
+      typeFilter = { not: "DIRECT_MESSAGE" };
+    }
+
+    const whereClause: any = {
+      ...authorizedWhere,
+    };
+    if (typeFilter) {
+      whereClause.spaceType = typeFilter;
+    }
+
     const spaces = await prisma.chatSpace.findMany({
-      where: authorizedWhere,
+      where: whereClause,
       include: {
         _count: {
           select: { messages: true },
@@ -194,12 +217,15 @@ export class ChatQueryService {
 
     const appUser = await prisma.appUser.findUnique({
       where: { id: appUserId },
-      select: { id: true, email: true, displayName: true },
+      select: { id: true, email: true, displayName: true, chatAllowDms: true, chatAllowSpaces: true },
     });
     if (!appUser) {
       throw new Error("Utilizador não encontrado.");
     }
     const userEmail = appUser.email.toLowerCase();
+
+    const allowDms = appUser.chatAllowDms ?? true;
+    const allowSpaces = appUser.chatAllowSpaces ?? true;
 
     // STRICT ISOLATION: Verify that this specific space belongs to the user
     const authorizedWhere = this.getAuthorizedSpaceWhere(appUserId, userEmail, appUser.displayName);
@@ -208,11 +234,20 @@ export class ChatQueryService {
         id: spaceId,
         ...authorizedWhere,
       },
-      select: { id: true },
+      select: { id: true, spaceType: true },
     });
 
     if (!authorizedSpace) {
       throw new Error("Não tem permissão para aceder a esta conversa arquivada.");
+    }
+
+    // Check granular sub-permissions (DMs vs Spaces)
+    const isDm = authorizedSpace.spaceType === "DIRECT_MESSAGE";
+    if (isDm && !allowDms) {
+      throw new Error("O seu acesso às mensagens diretas está restrito pelo Administrador.");
+    }
+    if (!isDm && !allowSpaces) {
+      throw new Error("O seu acesso aos espaços e canais de equipa está restrito pelo Administrador.");
     }
 
     const whereClause: any = {

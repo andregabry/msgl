@@ -179,6 +179,8 @@ model AppUser {
   mustChangePassword    Boolean            @default(false) @map("must_change_password")
   tempPasswordExpiresAt DateTime?          @map("temp_password_expires_at")
   systemAccess          String             @default("CHAT_PORTAL") @map("system_access") // MSGL, CHAT_PORTAL, BOTH
+  chatAllowDms          Boolean            @default(true) @map("chat_allow_dms")
+  chatAllowSpaces       Boolean            @default(true) @map("chat_allow_spaces")
   createdAt             DateTime           @default(now()) @map("created_at")
   updatedAt             DateTime           @updatedAt @map("updated_at")
 

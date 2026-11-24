@@ -99,10 +99,20 @@ export class ChatAttachmentService {
     if (actorUserId) {
       const appUser = await prisma.appUser.findUnique({
         where: { id: actorUserId },
-        select: { id: true, email: true, displayName: true, role: true },
+        select: { id: true, email: true, displayName: true, role: true, chatAllowDms: true, chatAllowSpaces: true },
       });
       if (!appUser) {
         throw new Error("Utilizador não autenticado.");
+      }
+
+      // Granular restrictions: DMs vs Spaces
+      const space = (attachment.chatMessage as any)?.chatSpace;
+      const isDm = space?.spaceType === "DIRECT_MESSAGE";
+      if (isDm && appUser.chatAllowDms === false) {
+        throw new Error("Acesso ao anexo de mensagem direta restrito pelo Administrador.");
+      }
+      if (!isDm && appUser.chatAllowSpaces === false) {
+        throw new Error("Acesso ao anexo de espaço/canal restrito pelo Administrador.");
       }
 
       // Admins and Managers have global administrative access
