@@ -25,6 +25,8 @@ import {
   MoreVertical,
   Eye,
   EyeOff,
+  User,
+  Hash,
 } from "lucide-react";
 import { AppSwal, toast, dialog, confirmAction, showLoading, hideLoading } from "@/lib/swal";
 
@@ -36,6 +38,8 @@ interface UserItem {
   isActive: boolean;
   createdAt: string;
   systemAccess?: string;
+  chatAllowDms?: boolean;
+  chatAllowSpaces?: boolean;
   mustChangePassword?: boolean;
   hasPassword?: boolean;
   externalIdentities?: any[];
@@ -344,6 +348,8 @@ export default function PlatformUsersPage() {
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [permChat, setPermChat] = useState(true);
+  const [permChatDms, setPermChatDms] = useState(true);
+  const [permChatSpaces, setPermChatSpaces] = useState(true);
   const [permBackups, setPermBackups] = useState(false);
   const [permMigration, setPermMigration] = useState(false);
   const [permAudit, setPermAudit] = useState(false);
@@ -372,33 +378,44 @@ export default function PlatformUsersPage() {
   const handleOpenPermissions = (u: UserItem) => {
     setEditingUser(u);
 
+    const userAllowDms = u.chatAllowDms !== false;
+    const userAllowSpaces = u.chatAllowSpaces !== false;
+    const hasAnyChat = userAllowDms || userAllowSpaces;
+
+    setPermChatDms(userAllowDms);
+    setPermChatSpaces(userAllowSpaces);
+
     if (u.role === "ADMIN") {
       setPermAdmin(true);
       setPermChat(true);
+      setPermChatDms(true);
+      setPermChatSpaces(true);
       setPermBackups(true);
       setPermMigration(true);
       setPermAudit(true);
     } else if (u.role === "BACKUP_OPERATOR") {
       setPermAdmin(false);
-      setPermChat(true);
+      setPermChat(hasAnyChat);
       setPermBackups(true);
       setPermMigration(false);
       setPermAudit(true);
     } else if (u.role === "MIGRATION_OPERATOR") {
       setPermAdmin(false);
-      setPermChat(true);
+      setPermChat(hasAnyChat);
       setPermBackups(false);
       setPermMigration(true);
       setPermAudit(true);
     } else if (u.role === "AUDITOR") {
       setPermAdmin(false);
       setPermChat(false);
+      setPermChatDms(false);
+      setPermChatSpaces(false);
       setPermBackups(false);
       setPermMigration(false);
       setPermAudit(true);
     } else {
       setPermAdmin(false);
-      setPermChat(true);
+      setPermChat(hasAnyChat);
       setPermBackups(false);
       setPermMigration(false);
       setPermAudit(false);
@@ -407,10 +424,47 @@ export default function PlatformUsersPage() {
     setIsPermModalOpen(true);
   };
 
+  const handleToggleChatMain = (enable: boolean) => {
+    setPermChat(enable);
+    if (!enable && permAdmin) {
+      setPermAdmin(false);
+    }
+    if (enable) {
+      if (!permChatDms && !permChatSpaces) {
+        setPermChatDms(true);
+        setPermChatSpaces(true);
+      }
+    }
+  };
+
+  const handleToggleChatDms = (enable: boolean) => {
+    setPermChatDms(enable);
+    if (enable && !permChat) {
+      setPermChat(true);
+    }
+    if (!enable && !permChatSpaces) {
+      setPermChat(false);
+      if (permAdmin) setPermAdmin(false);
+    }
+  };
+
+  const handleToggleChatSpaces = (enable: boolean) => {
+    setPermChatSpaces(enable);
+    if (enable && !permChat) {
+      setPermChat(true);
+    }
+    if (!enable && !permChatDms) {
+      setPermChat(false);
+      if (permAdmin) setPermAdmin(false);
+    }
+  };
+
   const handleToggleAdmin = (enable: boolean) => {
     setPermAdmin(enable);
     if (enable) {
       setPermChat(true);
+      setPermChatDms(true);
+      setPermChatSpaces(true);
       setPermBackups(true);
       setPermMigration(true);
       setPermAudit(true);
@@ -447,8 +501,14 @@ export default function PlatformUsersPage() {
           email: editingUser.email,
           displayName: editingUser.displayName,
           role: computedRole,
+          chatAllowDms: permChat ? permChatDms : false,
+          chatAllowSpaces: permChat ? permChatSpaces : false,
           permissions: {
             chat: permChat,
+            chatAllowDms: permChat ? permChatDms : false,
+            chatAllowSpaces: permChat ? permChatSpaces : false,
+            dms: permChat ? permChatDms : false,
+            spaces: permChat ? permChatSpaces : false,
             backups: permBackups,
             migration: permMigration,
             audit: permAudit,
@@ -585,13 +645,35 @@ export default function PlatformUsersPage() {
 
                       <td className="py-3.5 px-4 text-center">
                         {userIsChatOnly ? (
-                          <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
-                            /portal/chat (Sem Admin)
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                              /portal/chat (Sem Admin)
+                            </span>
+                            {(u.chatAllowDms === false || u.chatAllowSpaces === false) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                {u.chatAllowDms && !u.chatAllowSpaces
+                                  ? "DMs apenas"
+                                  : !u.chatAllowDms && u.chatAllowSpaces
+                                  ? "Espaços apenas"
+                                  : "Chat bloqueado"}
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                            / (Hub Geral Administrativo)
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                              / (Hub Geral Administrativo)
+                            </span>
+                            {(u.chatAllowDms === false || u.chatAllowSpaces === false) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                {u.chatAllowDms && !u.chatAllowSpaces
+                                  ? "DMs apenas"
+                                  : !u.chatAllowDms && u.chatAllowSpaces
+                                  ? "Espaços apenas"
+                                  : "Chat bloqueado"}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
 
@@ -1229,44 +1311,144 @@ export default function PlatformUsersPage() {
             {/* List of Permissions / Modules */}
             <form onSubmit={handleSavePermissions} className="space-y-3.5">
               {/* 1. Google Chat Portal */}
-              <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/70 bg-slate-50/50 dark:bg-[#121921]/60 flex items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <MessageSquare className="w-4 h-4" />
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700/70 bg-slate-50/50 dark:bg-[#121921]/60 overflow-hidden">
+                <div className="p-3.5 flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-slate-800 dark:text-slate-100">
+                        Portal Google Chat (Histórico)
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Consulta e pesquisa de mensagens, conversas diretas e anexos arquivados do Google Chat.
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs font-black text-slate-800 dark:text-slate-100">
-                      Portal Google Chat (Histórico)
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      Consulta e pesquisa de mensagens, conversas diretas e anexos arquivados do Google Chat.
-                    </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={permChat}
+                      onClick={() => handleToggleChatMain(!permChat)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        permChat ? "bg-[#e95c0c]" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                          permChat ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                    <span
+                      className={`text-[11px] font-black uppercase w-16 text-right ${
+                        permChat ? "text-[#e95c0c]" : "text-slate-400"
+                      }`}
+                    >
+                      {permChat ? "Ligado" : "Desligado"}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={permChat}
-                    onClick={() => handleToggleSubmodule(setPermChat, !permChat)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      permChat ? "bg-[#e95c0c]" : "bg-slate-300 dark:bg-slate-700"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-                        permChat ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                  <span
-                    className={`text-[11px] font-black uppercase w-16 text-right ${
-                      permChat ? "text-[#e95c0c]" : "text-slate-400"
-                    }`}
-                  >
-                    {permChat ? "Ligado" : "Desligado"}
-                  </span>
+                {/* Sub-itens para restringir Mensagens Diretas e Espaços */}
+                <div
+                  className={`px-3.5 pb-3.5 pt-2 border-t border-slate-200/60 dark:border-slate-700/50 space-y-2 bg-slate-100/50 dark:bg-[#0e141b]/60 transition-all ${
+                    permChat ? "opacity-100" : "opacity-40 pointer-events-none"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pl-1">
+                    <span>Restrição de Conteúdo no Portal (googlechat.enging.pt)</span>
+                    {!permChat && <span>(Desativado pelo módulo principal)</span>}
+                  </div>
+
+                  {/* Sub-item A: Mensagens Diretas */}
+                  <div className="p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 bg-white/90 dark:bg-[#161f2a] flex items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-md bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <User className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                          Mensagens Diretas (DMs)
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          Acesso a conversas diretas 1:1 e mensagens privadas
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={permChatDms}
+                        disabled={!permChat}
+                        onClick={() => handleToggleChatDms(!permChatDms)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          permChat && permChatDms ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                            permChat && permChatDms ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                      <span
+                        className={`text-[10px] font-bold uppercase w-14 text-right ${
+                          permChat && permChatDms ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
+                        }`}
+                      >
+                        {permChat && permChatDms ? "Ligado" : "Desligado"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sub-item B: Espaços e Canais */}
+                  <div className="p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 bg-white/90 dark:bg-[#161f2a] flex items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <Hash className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                          Espaços & Canais de Equipa
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          Acesso a salas em grupo, canais e tópicos de discussão
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={permChatSpaces}
+                        disabled={!permChat}
+                        onClick={() => handleToggleChatSpaces(!permChatSpaces)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          permChat && permChatSpaces ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-700"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                            permChat && permChatSpaces ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                      <span
+                        className={`text-[10px] font-bold uppercase w-14 text-right ${
+                          permChat && permChatSpaces ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
+                        }`}
+                      >
+                        {permChat && permChatSpaces ? "Ligado" : "Desligado"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 

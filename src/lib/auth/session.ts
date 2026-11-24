@@ -16,6 +16,8 @@ export interface SessionPayload {
   isSimulated?: boolean;
   mustChangePassword?: boolean;
   systemAccess?: string;
+  chatAllowDms?: boolean;
+  chatAllowSpaces?: boolean;
   isGestor?: boolean;
   impersonator?: {
     userId: string;
@@ -64,6 +66,8 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionPayload 
           isActive: true,
           mustChangePassword: true,
           systemAccess: true,
+          chatAllowDms: true,
+          chatAllowSpaces: true,
         },
       });
       if (user && user.isActive) {
@@ -75,6 +79,8 @@ export async function getCurrentUser(req?: NextRequest): Promise<SessionPayload 
           displayName: user.displayName,
           mustChangePassword: user.mustChangePassword,
           systemAccess: user.systemAccess,
+          chatAllowDms: user.chatAllowDms,
+          chatAllowSpaces: user.chatAllowSpaces,
           isGestor: gestor,
           isSimulated: payload.isSimulated || !!payload.impersonator,
           impersonator: payload.impersonator,

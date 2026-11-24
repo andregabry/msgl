@@ -64,12 +64,40 @@ export async function POST(req: NextRequest) {
       else systemAccess = "MSGL";
     }
 
+    let chatAllowDms = true;
+    let chatAllowSpaces = true;
+
+    if (body.permissions) {
+      if (typeof body.permissions.chatAllowDms === "boolean") {
+        chatAllowDms = body.permissions.chatAllowDms;
+      } else if (typeof body.permissions.dms === "boolean") {
+        chatAllowDms = body.permissions.dms;
+      }
+
+      if (typeof body.permissions.chatAllowSpaces === "boolean") {
+        chatAllowSpaces = body.permissions.chatAllowSpaces;
+      } else if (typeof body.permissions.spaces === "boolean") {
+        chatAllowSpaces = body.permissions.spaces;
+      }
+
+      // If the main chat permission is disabled
+      if (body.permissions.chat === false) {
+        chatAllowDms = false;
+        chatAllowSpaces = false;
+      }
+    } else {
+      if (typeof body.chatAllowDms === "boolean") chatAllowDms = body.chatAllowDms;
+      if (typeof body.chatAllowSpaces === "boolean") chatAllowSpaces = body.chatAllowSpaces;
+    }
+
     const user = await prisma.appUser.upsert({
       where: { email: email.toLowerCase() },
       update: {
         displayName,
         role: role as any,
         systemAccess,
+        chatAllowDms,
+        chatAllowSpaces,
         isActive: true,
         ...passwordUpdate,
       },
@@ -78,6 +106,8 @@ export async function POST(req: NextRequest) {
         displayName,
         role: role as any,
         systemAccess,
+        chatAllowDms,
+        chatAllowSpaces,
         isActive: true,
         ...passwordUpdate,
       },
